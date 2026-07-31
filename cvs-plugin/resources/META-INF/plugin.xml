@@ -9,10 +9,15 @@
       <b>Fork notice</b><br>
       This plugin is a community fork maintained by <b>jieyuexing</b>.
       It is <b>not</b> the official JetBrains plugin and is <b>not affiliated with JetBrains</b>.<br>
-      Upstream (original source):
-      <a href="https://github.com/JetBrains/intellij-obsolete-plugins/tree/master/cvs">https://github.com/JetBrains/intellij-obsolete-plugins/tree/master/cvs</a><br>
+      The official Marketplace plugin
+      (<a href="https://plugins.jetbrains.com/plugin/10746-cvs">10746-cvs</a>)
+      last released <b>223.0</b> for IDEA <b>2020.3 — 2022.1.4</b> (builds 203.1 — 221.*)
+      and is not advancing further. This project restarts maintenance under a new plugin id.
+      Early builds only target IDE versions the maintainer actually uses.<br>
+      Upstream source:
+      <a href="https://github.com/JetBrains/intellij-obsolete-plugins/tree/master/cvs">JetBrains/intellij-obsolete-plugins (cvs)</a><br>
       Maintainer repository:
-      <a href="https://github.com/jieyuexing/intellij-cvs-plugin">https://github.com/jieyuexing/intellij-cvs-plugin</a><br><br>
+      <a href="https://github.com/jieyuexing/intellij-cvs-plugin">jieyuexing/intellij-cvs-plugin</a><br><br>
 
       Allows working with CVS version control system.
       The following features are available:

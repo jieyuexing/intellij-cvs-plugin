@@ -21,6 +21,13 @@ vendor email:          jieyuexing@outlook.com
 Maven/Gradle group:    io.github.jieyuexing
 version series:        1.0.0-SNAPSHOT (fork numbering; not JetBrains 223.x)
 
+Official Marketplace (frozen)
+-----------------------------
+Listing:   https://plugins.jetbrains.com/plugin/10746-cvs
+Last ver:  223.0  (since 203.1 — until 221.*; IDEA 2020.3 — 2022.1.4)
+Posture:   JetBrains line stopped advancing; community fork restarts maintenance.
+Early policy: only IDE versions the maintainer actually uses are prioritized.
+
 Intentionally unchanged
 -----------------------
 - Java packages under com.intellij.cvsSupport2.* (high churn; legal under Apache-2.0)
