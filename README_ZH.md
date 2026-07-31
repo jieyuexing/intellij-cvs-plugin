@@ -86,16 +86,16 @@ JetBrains 已弃用 CVS 支持，把代码迁到 `intellij-obsolete-plugins`，�
 | --- | --- | --- | --- | --- |
 | 基线（上游最后） | IDEA `2020.3` – `2022.1.4` | `203` – `221` | 历史（官方 223.0） | 仅作对照；不是本 fork 主线 |
 | 源码树默认 | obsolete-plugins 片段 | `2022.3` / `223` | 未验证 | Gradle 尚未独立；不是维护者安装目标 |
-| **Active（主）** | **IntelliJ IDEA `2026.2.1`** | **`262.*`** | **已采纳** | 较新日常 IDE；Gradle 接线后的首选编译 / API 抬升目标 |
-| **Active（次）** | **IntelliJ IDEA `2023.2.8`** | **`232.*`** | **已采纳** | 较旧日常 IDE；主目标可用后做安装冒烟 / 回归 |
+| **Active（主）** | **IntelliJ IDEA `2026.2.1`** | **`262.*`**（本机 `262.9437.22`） | **已钉死** | 独立 Gradle 已对准；首次 `compileJava` 仍红（约 100 处 API 错误） |
+| **Active（次）** | **IntelliJ IDEA `2023.2.8`** | **`232.*`** | **已采纳（靠后）** | 主目标变绿后再冒烟 |
 | 暂不覆盖 | 其它 IDE 版本 | — | 尽力 / 以后 | 未写入 Active 前不作承诺 |
 
 **早期构建策略**
 
-1. 先做出可在 **2026.2.1**（主目标）上安装的独立 Gradle 插件包。  
-2. 用同一（或经兼容检查的）产物在 **2023.2.8** 上安装，并对核心 CVS 路径做冒烟。  
-3. **两边都试过**之后再写 `sinceBuild` / `untilBuild`；未验证前不宣称覆盖整段 `232`–`262`。  
-4. 官方 `223.0` 范围保持历史意义；本 fork **无义务**继续支持 `2020.3`–`2022.1.4`。
+1. ~~为 **2026.2.1** 接独立 Gradle~~ — **已完成**（见 [docs/platform-2026.2-notes.md](docs/platform-2026.2-notes.md)）。  
+2. 在 **2026.2.1** 上把 `compileJava` / `buildPlugin` 做绿（最小 API 适配）。  
+3. 安装冒烟 **2026.2.1**，再 **2023.2.8**。  
+4. 两边都通后再放宽 `since`/`until`。官方 `223.0` 范围仅作历史。
 
 ## 身份（维护者 = jieyuexing）
 
@@ -136,20 +136,24 @@ JetBrains 已弃用 CVS 支持，把代码迁到 `intellij-obsolete-plugins`，�
 - [x] `AGENTS.md`（保原码 / 解耦 / en+zh 文案）  
 - [x] 维护者目标：IDEA **2026.2.1**（主）、**2023.2.8**（次）  
 - [x] 中文 README（本文件）  
-- [ ] 独立 Gradle 构建（settings、wrapper、intellij 插件接线）  
-- [ ] 在 **2026.2.1** 上构建 + 安装冒烟  
-- [ ] 在 **2023.2.8** 上安装冒烟  
+- [x] 独立 Gradle（Platform Plugin 2.18.1、Java 25、`since`/`until` = `262` / `262.*`）  
+- [ ] **2026.2.1** 上 `compileJava` 变绿（API 抬升，见 [docs/platform-2026.2-notes.md](docs/platform-2026.2-notes.md)）  
+- [ ] `buildPlugin` + **2026.2.1** 安装冒烟  
+- [ ] **2023.2.8** 安装冒烟  
 - [ ] `CvsBundle_zh.properties`（及兄弟 bundle）初译  
 - [ ] 可选：社区 Marketplace 发布  
 
-## 构建（尚未就绪）
-
-原有 `build.gradle.kts` 只是 obsolete-plugins 多插件 monorepo 的片段。下一步需要补齐独立构建接线。
+## 构建（已钉 2026.2.1；编译尚未全绿）
 
 ```bash
-# 计划中
+# 使用 IDEA 2026.2.1 自带的 JBR 25
+export JAVA_HOME="$HOME/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Home"
+./gradlew compileJava
+# API 适配完成后：
 ./gradlew buildPlugin
 ```
+
+细节见 [docs/platform-2026.2-notes.md](docs/platform-2026.2-notes.md)。
 
 ## 目录结构
 

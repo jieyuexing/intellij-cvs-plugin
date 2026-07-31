@@ -86,11 +86,12 @@ smartcvs-src/messages/SmartCvsSrcBundle_zh.properties
 
 | 优先级 | 维护者在用版本 | 平台线（约） | 用途 |
 | --- | --- | --- | --- |
-| **Primary** | IntelliJ IDEA **2026.2.1** | **262.*** | 首选编译、API 抬升、主安装验证 |
-| **Secondary** | IntelliJ IDEA **2023.2.8** | **232.*** | 次要安装冒烟 / 回归 |
+| **Primary（已钉）** | IntelliJ IDEA **2026.2.1** | **262.***（本机 `262.9437.22`） | Gradle 目标；`pluginSinceBuild=262` / `until=262.*`；编译用 **JBR 25** |
+| **Secondary** | IntelliJ IDEA **2023.2.8** | **232.*** | 主目标变绿后再冒烟 |
 
-- 抬升平台顺序：先在 **2026.2.1** 上能编译安装 → 再在 **2023.2.8** 上冒烟 → 最后才写宽 `sinceBuild`/`untilBuild`。
-- 核心回归路径：checkout / update / commit / diff / history（两台 Active IDE 至少各做一次最小冒烟，条件允许时）。
+- 构建说明：`docs/platform-2026.2-notes.md`；默认优先 `local()` 本机 2026.2 安装。
+- 抬升顺序：~~Gradle 接线~~ → **`compileJava` 绿** → `buildPlugin` + 2026.2.1 安装 → 2023.2.8 冒烟 → 再写宽 `since`/`until`。
+- 核心回归路径：checkout / update / commit / diff / history。
 
 ## 3. 目录地图（只读导航）
 

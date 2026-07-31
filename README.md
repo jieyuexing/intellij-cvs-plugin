@@ -86,16 +86,16 @@ Maintainer machines currently run the two **Active** rows only.
 | --- | --- | --- | --- | --- |
 | Baseline (upstream last) | IDEA `2020.3` – `2022.1.4` | `203` – `221` | Historical (official 223.0) | Reference only; not the fork’s main track |
 | Source tree default | obsolete-plugins fragment | `2022.3` / `223` | Unverified | Gradle still incomplete; not a maintainer install target |
-| **Active (primary)** | **IntelliJ IDEA `2026.2.1`** | **`262.*`** | **Adopted** | Newer daily IDE; preferred compile / API-lift target when wiring Gradle |
-| **Active (secondary)** | **IntelliJ IDEA `2023.2.8`** | **`232.*`** | **Adopted** | Older daily IDE; smoke / regression after primary builds work |
+| **Active (primary)** | **IntelliJ IDEA `2026.2.1`** | **`262.*`** (`262.9437.22` local) | **Nailed** | Standalone Gradle targets this IDE; first `compileJava` still red (~100 API errors) |
+| **Active (secondary)** | **IntelliJ IDEA `2023.2.8`** | **`232.*`** | **Adopted (later)** | After primary is green |
 | Out of scope for now | Other IDE versions | — | Best-effort / later | No commitment until added as Active |
 
 **Early build strategy**
 
-1. Get a standalone Gradle build that can produce a plugin zip installable on **2026.2.1** (primary).
-2. Install the same (or a compatibility-checked) artifact on **2023.2.8** and smoke core CVS paths.
-3. Set `sinceBuild` / `untilBuild` only after both Active targets have been tried; do not claim the full `232`–`262` span until verified.
-4. Official `223.0` range stays historical; no obligation to keep `2020.3`–`2022.1.4` working on this fork.
+1. ~~Standalone Gradle for **2026.2.1**~~ — **done** (`build.gradle.kts` + wrapper; see [docs/platform-2026.2-notes.md](docs/platform-2026.2-notes.md)).
+2. Make `compileJava` / `buildPlugin` green on **2026.2.1** (API adapters; minimal diffs).
+3. Install smoke on **2026.2.1**, then **2023.2.8**.
+4. Widen `since`/`until` only after both Active targets work. Official `223.0` range stays historical.
 
 ## Identity (maintainer = jieyuexing)
 
@@ -136,20 +136,24 @@ Early fork setup:
 - [x] `AGENTS.md` (preserve code / decouple / en+zh labels)
 - [x] Maintainer targets: IDEA **2026.2.1** (primary), **2023.2.8** (secondary)
 - [x] Chinese README (`README_ZH.md`)
-- [ ] Standalone Gradle build (settings, wrapper, intellij plugin wiring)
-- [ ] Build + install smoke on **2026.2.1**
+- [x] Standalone Gradle (Platform Plugin 2.18.1, Java 25, `since`/`until` = `262` / `262.*`)
+- [ ] `compileJava` green on **2026.2.1** (API lift; see [docs/platform-2026.2-notes.md](docs/platform-2026.2-notes.md))
+- [ ] `buildPlugin` + install smoke on **2026.2.1**
 - [ ] Install smoke on **2023.2.8**
 - [ ] `CvsBundle_zh.properties` (and sibling bundles) initial pass
 - [ ] Optional Marketplace (community) publish
 
-## Build (not ready yet)
-
-The original `build.gradle.kts` was a fragment of the multi-plugin obsolete-plugins monorepo. Standalone build wiring is the next step.
+## Build (2026.2.1 nailed; compile not green yet)
 
 ```bash
-# planned
+# Use JBR 25 from IDEA 2026.2.1
+export JAVA_HOME="$HOME/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Home"
+./gradlew compileJava
+# after API lift:
 ./gradlew buildPlugin
 ```
+
+Details: [docs/platform-2026.2-notes.md](docs/platform-2026.2-notes.md).
 
 ## Layout
 
