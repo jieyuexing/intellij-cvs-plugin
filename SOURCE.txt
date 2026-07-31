@@ -1,0 +1,34 @@
+Provenance
+==========
+Local path:  planet-resources/planet-projects/intellij-plugins/intellij-cvs-plugin
+Copied from: planet-resources/planet-projects/archive/intellij-obsolete-plugins/cvs
+Upstream:    JetBrains intellij-obsolete-plugins (CVS plugin)
+             https://github.com/JetBrains/intellij-obsolete-plugins/tree/master/cvs
+License:     Apache License 2.0 (see LICENSE)
+Copy date:   2026-07-31
+Purpose:     Community maintenance fork for GitHub publication
+
+Fork identity (maintainer = jieyuexing)
+--------------------------------------
+This is a fork of:
+  https://github.com/JetBrains/intellij-obsolete-plugins/tree/master/cvs
+GitHub repo (planned): https://github.com/jieyuexing/intellij-cvs-plugin
+plugin id:             io.github.jieyuexing.cvs   (NOT JetBrains id "CVS")
+plugin display name:   CVS (Community)
+vendor:                jieyuexing
+vendor url:            https://github.com/jieyuexing
+vendor email:          jieyuexing@outlook.com
+Maven/Gradle group:    io.github.jieyuexing
+version series:        1.0.0-SNAPSHOT (fork numbering; not JetBrains 223.x)
+
+Intentionally unchanged
+-----------------------
+- Java packages under com.intellij.cvsSupport2.* (high churn; legal under Apache-2.0)
+- VCS protocol name / administrative area "CVS" (on-disk CVS/ metadata)
+- Action ids and most internal identifiers
+
+Notes
+-----
+- Build wiring (standalone settings.gradle.kts / wrapper) not fully adapted yet.
+- Original parent build targeted IntelliJ platform 2022.3.
+- Subdirs: cvs-core, cvs-plugin, javacvs-src, smartcvs-src, testSource, trilead-ssh2-build213, lib/
