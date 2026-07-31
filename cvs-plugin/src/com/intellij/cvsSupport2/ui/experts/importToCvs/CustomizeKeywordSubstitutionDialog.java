@@ -138,10 +138,14 @@ public class CustomizeKeywordSubstitutionDialog extends DialogWrapper {
     final ArrayList<FileExtension> result = new ArrayList<>(storedExtensions);
     final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     for (FileType fileType : fileTypes) {
-      final String[] extensions = FileTypeManager.getInstance().getAssociatedExtensions(fileType);
-      for (String extension : extensions) {
-        final FileExtension fileExtension = new FileExtension(extension);
-        if (!result.contains(fileExtension)) result.add(fileExtension);
+      for (com.intellij.openapi.fileTypes.FileNameMatcher matcher :
+           FileTypeManager.getInstance().getAssociations(fileType)) {
+        if (matcher instanceof com.intellij.openapi.fileTypes.ExtensionFileNameMatcher) {
+          final String extension =
+            ((com.intellij.openapi.fileTypes.ExtensionFileNameMatcher)matcher).getExtension();
+          final FileExtension fileExtension = new FileExtension(extension);
+          if (!result.contains(fileExtension)) result.add(fileExtension);
+        }
       }
     }
     return result;

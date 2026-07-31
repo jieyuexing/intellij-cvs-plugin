@@ -48,11 +48,11 @@ public class CvsContextWrapper implements CvsContext {
   }
 
   public static CvsContext createCachedInstance(AnActionEvent event) {
-    return new CachedCvsContext(new CvsContextWrapper(event, VcsContextFactory.SERVICE.getInstance().createCachedContextOn(event)));
+    return new CachedCvsContext(new CvsContextWrapper(event, com.intellij.openapi.vcs.actions.VcsContextWrapper.createCachedInstanceOn(event)));
   }
 
   public static CvsContext createInstance(AnActionEvent event) {
-    return new CvsContextWrapper(event, VcsContextFactory.SERVICE.getInstance().createContextOn(event));
+    return new CvsContextWrapper(event, com.intellij.openapi.vcs.actions.VcsContextWrapper.createInstanceOn(event));
   }
 
   @Override

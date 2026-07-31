@@ -1,6 +1,6 @@
 # Platform target: IntelliJ IDEA 2026.2.1
 
-Status: **build wired, first compile not green** (API lift in progress).
+Status: **`compileJava` green + `buildPlugin` green** on IDEA 2026.2.1 (2026-07-31).
 
 ## Nailed configuration
 
@@ -24,25 +24,42 @@ cd /path/to/intellij-cvs-plugin
 ./gradlew buildPlugin
 ```
 
-## First `compileJava` snapshot (2026-07-31)
+## What was fixed to go green (minimal diffs)
 
-Against local 2026.2.1 + JBR 25:
-
-- Roughly **~100** compile errors across **~70** source files (upstream last targeted ~2022.3 era).
-- Dominant themes (not exhaustive):
-
-| Theme | Examples |
+| Theme | Approach |
 | --- | --- |
-| Removed / moved VCS API | `com.intellij.openapi.vcs.vfs.*`, `VcsBalloonProblemNotifier`, filter component base classes |
-| UI / chooser API | `FileSystemTreeFactory.SERVICE`, `FileLabel`, cell renderer hierarchy |
-| Settings / lazy value | `AtomicNotNullLazyValue` visibility, `VcsConfiguration` fields/methods |
-| Third-party was bundled | `com.michaelbaranov.microba.calendar.DatePicker` (no longer on platform CP) |
-| Signature drift | `ReadOnlyAttributeUtil.setReadOnlyAttribute`, committed-changes filter editors |
+| Missing CP (`vcs.impl`, microba) | `bundledModule("intellij.platform.vcs.impl"…)` + `bundledLibrary(microba)` |
+| `FileLabel` / `EditorAdapter` removed | Local shims under `com.intellij.util.ui.*` |
+| `FileSystemTreeFactory` removed | `new FileSystemTreeImpl(...)` |
+| `VcsVirtualFile` ctor | `VcsVirtualFile(FilePath, VcsFileRevision)` |
+| `ChangelistBuilder` | `processUnversioned/Ignored(FilePath)` via `VcsUtil.getFilePath` |
+| `VcsConfiguration.getCheckoutOption` gone | `PerformInBackgroundOption.DEAF` |
+| Annotations / icons / lazy | Drop `CalledInBackground`; replace Cvs icons; `NotNullLazyValue.atomicLazy` |
+| Dead `@Override`s on AbstractVcs | Remove override where method removed (`getMenuItemText`, `isVersionedDirectory`, `getCheckoutProvider`, …) |
 
-**Policy:** keep original code structure; fix with **minimal API adapters** per call site or thin compatibility helpers — no big-bang rewrite (see `AGENTS.md` P-01 / P-02).
+**Known behavioral gaps (compile OK, runtime TBD):**
+
+- SOCKS host-specific `CommonProxy.setCustom(ProxySelector)` removed — only auth registration kept.
+- File chooser toolbar no longer injects default platform tree actions.
+- Background-option / add-remove confirmation wiring simplified to `DEAF`.
+
+## Build artifact
+
+```bash
+export JAVA_HOME="$HOME/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Home"
+./gradlew buildPlugin
+# -> build/distributions/intellij-cvs-plugin-1.0.0-SNAPSHOT.zip
+```
+
+### Install smoke on 2026.2.1
+
+1. IDEA → Settings → Plugins → ⚙️ → Install Plugin from Disk…  
+2. Choose `build/distributions/intellij-cvs-plugin-1.0.0-SNAPSHOT.zip`  
+3. Restart; confirm **CVS (Community)** appears (id `io.github.jieyuexing.cvs`).  
+4. Optional: open a CVS working copy; try Browse / Checkout / Update / History.
 
 ## Next steps
 
-1. Green `compileJava` on 2026.2.1 (adapters + missing deps).
-2. `buildPlugin` + install into 2026.2.1; smoke CVS paths.
-3. Only then re-open 2023.2.8 as secondary.
+1. Manual install smoke on **2026.2.1** (checklist above).
+2. Runtime fixes for SOCKS / chooser / confirmation if needed.
+3. Secondary target **2023.2.8** only after primary smoke.

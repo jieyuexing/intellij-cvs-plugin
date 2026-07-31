@@ -15,6 +15,8 @@
  */
 package com.intellij.cvsSupport2.actions;
 
+import com.intellij.openapi.progress.PerformInBackgroundOption;
+
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.actionVisibility.CvsActionVisibility;
@@ -92,7 +94,7 @@ public class CheckoutFileAction extends ActionOnSelectedElement {
     }
 
     return CommandCvsHandler.createCheckoutFileHandler(filesArray, CvsConfiguration.getInstance(project),
-                                                       VcsConfiguration.getInstance(project).getCheckoutOption());
+                                                       PerformInBackgroundOption.DEAF);
   }
 
   @Override

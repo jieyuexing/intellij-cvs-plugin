@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.checkout;
 
+import com.intellij.openapi.progress.PerformInBackgroundOption;
+
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.AbstractAction;
@@ -60,7 +62,7 @@ public class CheckoutAction extends AbstractAction {
       myCheckoutDirectory,
       myUseAlternativeCheckoutPath,
       CvsApplicationLevelConfiguration.getInstance().MAKE_CHECKED_OUT_FILES_READONLY,
-      project == null ? null : VcsConfiguration.getInstance(project).getCheckoutOption());
+      project == null ? null : PerformInBackgroundOption.DEAF);
   }
 
   private String[] collectCheckoutPaths() {

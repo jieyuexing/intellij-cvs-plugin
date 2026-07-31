@@ -15,7 +15,7 @@ public class CvsListCellRenderer extends AbstractListCellRenderer {
   @Override
   protected Icon getPresentableIcon(Object value) {
     if (value == null) return null;
-    return AllIcons.Nodes.Cvs_global;
+    return AllIcons.Nodes.PpWeb;
   }
 
   @Override

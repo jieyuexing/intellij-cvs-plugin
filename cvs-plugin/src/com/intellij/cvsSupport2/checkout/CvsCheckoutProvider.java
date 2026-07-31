@@ -15,6 +15,8 @@
  */
 package com.intellij.cvsSupport2.checkout;
 
+import com.intellij.openapi.progress.PerformInBackgroundOption;
+
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
@@ -53,7 +55,7 @@ public class CvsCheckoutProvider implements CheckoutProvider {
       checkoutDirectory,
       useAlternateCheckoutPath,
       CvsApplicationLevelConfiguration.getInstance().MAKE_CHECKED_OUT_FILES_READONLY,
-      VcsConfiguration.getInstance(project).getCheckoutOption());
+      PerformInBackgroundOption.DEAF);
 
     final CvsOperationExecutor executor = new CvsOperationExecutor(null);
     executor.performActionSync(checkoutHandler, new CvsOperationExecutorCallback() {

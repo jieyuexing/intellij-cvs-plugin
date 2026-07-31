@@ -65,6 +65,13 @@ dependencies {
             val ver = providers.gradleProperty("platformVersion")
             create(type, ver)
         }
+
+        // Local IDE default CP only exposes vcs.core / vcs — not impl UI/vfs helpers.
+        // plugin.xml depends on modules.vcs; compile needs impl for VcsVirtualFile, balloons, etc.
+        bundledModule("intellij.platform.vcs.impl")
+        bundledModule("intellij.platform.vcs.impl.lang")
+        // DatePicker used by date/revision UI (bundled in IDE but not on default CP)
+        bundledLibrary("lib/intellij.libraries.microba.jar")
     }
 }
 

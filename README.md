@@ -86,7 +86,7 @@ Maintainer machines currently run the two **Active** rows only.
 | --- | --- | --- | --- | --- |
 | Baseline (upstream last) | IDEA `2020.3` – `2022.1.4` | `203` – `221` | Historical (official 223.0) | Reference only; not the fork’s main track |
 | Source tree default | obsolete-plugins fragment | `2022.3` / `223` | Unverified | Gradle still incomplete; not a maintainer install target |
-| **Active (primary)** | **IntelliJ IDEA `2026.2.1`** | **`262.*`** (`262.9437.22` local) | **Nailed** | Standalone Gradle targets this IDE; first `compileJava` still red (~100 API errors) |
+| **Active (primary)** | **IntelliJ IDEA `2026.2.1`** | **`262.*`** (`262.9437.22` local) | **Build green** | `compileJava` + `buildPlugin` OK; install smoke pending |
 | **Active (secondary)** | **IntelliJ IDEA `2023.2.8`** | **`232.*`** | **Adopted (later)** | After primary is green |
 | Out of scope for now | Other IDE versions | — | Best-effort / later | No commitment until added as Active |
 
@@ -137,22 +137,23 @@ Early fork setup:
 - [x] Maintainer targets: IDEA **2026.2.1** (primary), **2023.2.8** (secondary)
 - [x] Chinese README (`README_ZH.md`)
 - [x] Standalone Gradle (Platform Plugin 2.18.1, Java 25, `since`/`until` = `262` / `262.*`)
-- [ ] `compileJava` green on **2026.2.1** (API lift; see [docs/platform-2026.2-notes.md](docs/platform-2026.2-notes.md))
-- [ ] `buildPlugin` + install smoke on **2026.2.1**
+- [x] `compileJava` green on **2026.2.1**
+- [x] `buildPlugin` green → `build/distributions/intellij-cvs-plugin-1.0.0-SNAPSHOT.zip`
+- [ ] Install smoke on **2026.2.1** (from disk)
 - [ ] Install smoke on **2023.2.8**
 - [ ] `CvsBundle_zh.properties` (and sibling bundles) initial pass
 - [ ] Optional Marketplace (community) publish
 
-## Build (2026.2.1 nailed; compile not green yet)
+## Build (2026.2.1)
 
 ```bash
 # Use JBR 25 from IDEA 2026.2.1
 export JAVA_HOME="$HOME/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Home"
-./gradlew compileJava
-# after API lift:
 ./gradlew buildPlugin
+# artifact: build/distributions/intellij-cvs-plugin-1.0.0-SNAPSHOT.zip
 ```
 
+Install: Settings → Plugins → ⚙️ → Install Plugin from Disk… → pick the zip → restart.  
 Details: [docs/platform-2026.2-notes.md](docs/platform-2026.2-notes.md).
 
 ## Layout

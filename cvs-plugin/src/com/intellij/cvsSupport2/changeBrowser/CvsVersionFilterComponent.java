@@ -19,9 +19,10 @@ public class CvsVersionFilterComponent extends StandardVersionFilterComponent<Ch
   private JPanel myStandardPanel;
 
   public CvsVersionFilterComponent(boolean showDateFilter) {
+    super(showDateFilter);
     myStandardPanel.setLayout(new BorderLayout());
     if (showDateFilter) {
-      myStandardPanel.add(super.getDatePanel(), BorderLayout.CENTER);
+      myStandardPanel.add(getStandardPanel(), BorderLayout.CENTER);
     }
     init(new ChangeBrowserSettings());
   }

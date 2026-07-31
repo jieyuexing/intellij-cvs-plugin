@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileSystemTree;
-import com.intellij.openapi.fileChooser.FileSystemTreeFactory;
 import com.intellij.openapi.fileChooser.ex.*;
 import com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -84,7 +83,7 @@ public abstract class SelectLocationStep extends WizardStep {
   public SelectLocationStep(String description, CvsWizard wizard, @Nullable final Project project, boolean showFiles) {
     super(description, wizard);
     myChooserDescriptor = new FileChooserDescriptor(showFiles, true, false, false, false, true);
-    myFileSystemTree = FileSystemTreeFactory.SERVICE.getInstance().createFileSystemTree(project, myChooserDescriptor);
+    myFileSystemTree = new FileSystemTreeImpl(project, myChooserDescriptor);
     myFileSystemTree.updateTree();
 
     myPathTextField = new Vfs(
@@ -180,10 +179,9 @@ public abstract class SelectLocationStep extends WizardStep {
   }
 
   private DefaultActionGroup createFileSystemActionGroup() {
-    final DefaultActionGroup group = FileSystemTreeFactory.SERVICE.getInstance().createDefaultFileSystemActions(myFileSystemTree);
+    // FileSystemTreeFactory removed in 2026.x; keep custom actions only.
+    final DefaultActionGroup group = new DefaultActionGroup();
     final AnAction[] actions = getActions();
-    if (actions.length > 0) group.addSeparator();
-
     for (AnAction action : actions) {
       group.add(action);
     }

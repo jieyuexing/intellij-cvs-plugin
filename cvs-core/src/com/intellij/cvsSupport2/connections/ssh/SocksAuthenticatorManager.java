@@ -54,7 +54,8 @@ public class SocksAuthenticatorManager {
       synchronized (myLock) {
         if (mySelector == null) {
           mySelector = new CvsProxySelector();
-          CommonProxy.getInstance().setCustom("com.intellij.cvsSupport2.connections.ssh.CvsSocksSelector", mySelector);
+          // CommonProxy.setCustom(ProxySelector) removed in 2026.x; auth still registered via setCustomAuth.
+          // Host-specific SOCKS selection kept in CvsProxySelector for future re-hook.
         }
       }
     }

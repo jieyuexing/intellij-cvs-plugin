@@ -39,8 +39,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 
 import java.io.File;
@@ -123,9 +123,9 @@ public class CvsServicesImpl extends CvsServices {
     ComparableVcsRevisionOnOperation revision = new ComparableVcsRevisionOnOperation(operation,
                                                                                      project);
 
-    VcsVirtualFile vcsVirtualFile = new VcsVirtualFile(cvsFile.getPathInCvs(),
-                                                       revision,
-                                                       VcsFileSystem.getInstance());
+    VcsVirtualFile vcsVirtualFile = new VcsVirtualFile(
+      VcsUtil.getFilePathOnNonLocal(cvsFile.getPathInCvs(), false),
+      revision);
     OpenFileDescriptor openFileDescriptor = new OpenFileDescriptor(project, vcsVirtualFile);
     FileEditorManager.getInstance(project).openTextEditor(openFileDescriptor, false);
   }

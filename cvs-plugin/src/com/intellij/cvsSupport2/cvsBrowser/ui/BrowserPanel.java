@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.cvsBrowser.ui;
 
+import com.intellij.openapi.progress.PerformInBackgroundOption;
+
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsFilePath;
 import com.intellij.cvsSupport2.CvsVcs2;
@@ -131,7 +133,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
         myCvsRootConfiguration,
         new String[]{selectedElement.getCheckoutPath()},
         myCheckoutHelper.getCheckoutLocation(),
-        false, CvsConfiguration.getInstance(myProject).MAKE_NEW_FILES_READONLY, VcsConfiguration.getInstance(myProject).getCheckoutOption());
+        false, CvsConfiguration.getInstance(myProject).MAKE_NEW_FILES_READONLY, PerformInBackgroundOption.DEAF);
 
       CvsContextAdapter context = new CvsContextAdapter() {
         @Override

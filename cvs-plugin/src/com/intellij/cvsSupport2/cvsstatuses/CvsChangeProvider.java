@@ -124,10 +124,10 @@ public class CvsChangeProvider implements ChangeProvider {
     final DirectoryContent dirContent = getDirectoryContent(dir, progress);
 
     for (VirtualFile file : dirContent.getUnknownFiles()) {
-      builder.processUnversionedFile(file);
+      builder.processUnversionedFile(VcsUtil.getFilePath(file));
     }
     for (VirtualFile file : dirContent.getIgnoredFiles()) {
-      builder.processIgnoredFile(file);
+      builder.processIgnoredFile(VcsUtil.getFilePath(file));
     }
 
     for (Entry entry : dirContent.getDeletedDirectories()) {
@@ -276,10 +276,10 @@ public class CvsChangeProvider implements ChangeProvider {
     final CvsInfo info = myEntriesManager.getCvsInfoFor(dir);
     if (info.getRepository() == null) {
       if (info.getIgnoreFilter().shouldBeIgnored(dir)) {
-        builder.processIgnoredFile(dir);
+        builder.processIgnoredFile(VcsUtil.getFilePath(dir));
       }
       else {
-        builder.processUnversionedFile(dir);
+        builder.processUnversionedFile(VcsUtil.getFilePath(dir));
       }
       return;
     }
@@ -375,10 +375,10 @@ public class CvsChangeProvider implements ChangeProvider {
       builder.processLocallyDeletedFile(filePath);
     }
     else if (status == FileStatus.UNKNOWN) {
-      builder.processUnversionedFile(filePath.getVirtualFile());
+      builder.processUnversionedFile(filePath);
     }
     else if (status == FileStatus.IGNORED) {
-      builder.processIgnoredFile(filePath.getVirtualFile());
+      builder.processIgnoredFile(filePath);
     }
   }
 

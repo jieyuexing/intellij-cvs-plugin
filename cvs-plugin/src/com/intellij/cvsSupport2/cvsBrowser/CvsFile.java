@@ -21,7 +21,6 @@ import com.intellij.cvsSupport2.history.ComparableVcsRevisionOnOperation;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -57,11 +56,11 @@ public class CvsFile extends CvsElement {
   }
 
   private VirtualFile createVirtualFile() {
-    return new VcsVirtualFile(myPath,
-                              new ComparableVcsRevisionOnOperation(
-                                new GetFileContentOperation(getCvsLightFile(), myEnvironment, myEnvironment.getRevisionOrDate()),
-                                myProject),
-                              VcsFileSystem.getInstance());
+    return new VcsVirtualFile(
+      com.intellij.vcsUtil.VcsUtil.getFilePathOnNonLocal(myPath, false),
+      new ComparableVcsRevisionOnOperation(
+        new GetFileContentOperation(getCvsLightFile(), myEnvironment, myEnvironment.getRevisionOrDate()),
+        myProject));
   }
 
   @Override

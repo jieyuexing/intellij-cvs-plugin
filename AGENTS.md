@@ -90,7 +90,7 @@ smartcvs-src/messages/SmartCvsSrcBundle_zh.properties
 | **Secondary** | IntelliJ IDEA **2023.2.8** | **232.*** | 主目标变绿后再冒烟 |
 
 - 构建说明：`docs/platform-2026.2-notes.md`；默认优先 `local()` 本机 2026.2 安装。
-- 抬升顺序：~~Gradle 接线~~ → **`compileJava` 绿** → `buildPlugin` + 2026.2.1 安装 → 2023.2.8 冒烟 → 再写宽 `since`/`until`。
+- 抬升顺序：~~Gradle 接线~~ → ~~`compileJava` 绿~~ → ~~`buildPlugin` 绿~~ → **2026.2.1 安装冒烟** → 2023.2.8 冒烟 → 再写宽 `since`/`until`。
 - 核心回归路径：checkout / update / commit / diff / history。
 
 ## 3. 目录地图（只读导航）

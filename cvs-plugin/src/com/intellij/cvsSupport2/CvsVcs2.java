@@ -277,17 +277,14 @@ public final class CvsVcs2 extends AbstractVcs implements TransactionProvider, E
     return myCvsHistoryProvider;
   }
 
-  @Override
   public String getMenuItemText() {
     return CvsBundle.message("menu.text.cvsGroup");
   }
 
-  @Override
   public UpdateEnvironment createUpdateEnvironment() {
     return myCvsUpdateEnvironment;
   }
 
-  @Override
   public boolean fileIsUnderVcs(FilePath filePath) {
     return CvsUtil.fileIsUnderCvs(filePath.getIOFile());
   }
@@ -350,13 +347,11 @@ public final class CvsVcs2 extends AbstractVcs implements TransactionProvider, E
     return CvsUtil.REVISION_PATTERN;
   }
 
-  @Override
   public boolean isVersionedDirectory(final VirtualFile dir) {
     final VirtualFile child = dir.findChild(NAME);
     return child != null && child.isDirectory();
   }
 
-  @Override
   public CvsCheckoutProvider getCheckoutProvider() {
     return myCvsCheckoutProvider;
   }

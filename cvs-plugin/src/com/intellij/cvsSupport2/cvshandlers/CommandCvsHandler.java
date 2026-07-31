@@ -51,7 +51,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -233,7 +232,7 @@ public class CommandCvsHandler extends CvsHandler {
     }
     return new CommandCvsHandler(CvsBundle.message("action.name.add"), operation,
                                  FileSetToBeUpdated.selectedFiles(VfsUtilCore.toVirtualFileArray(addedFiles)),
-                                 VcsConfiguration.getInstance(project).getAddRemoveOption());
+                                 PerformInBackgroundOption.DEAF);
   }
 
   public static CvsHandler createRemoveFilesHandler(Project project, Collection<File> files) {
@@ -243,7 +242,7 @@ public class CommandCvsHandler extends CvsHandler {
     }
     return new CommandCvsHandler(CvsBundle.message("action.name.remove"), operation,
                                  FileSetToBeUpdated.selectedFiles(getAdminDirectoriesFor(files)),
-                                 VcsConfiguration.getInstance(project).getAddRemoveOption());
+                                 PerformInBackgroundOption.DEAF);
   }
 
   private static VirtualFile[] getAdminDirectoriesFor(Collection<File> files) {
