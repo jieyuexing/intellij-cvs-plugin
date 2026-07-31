@@ -82,8 +82,15 @@ smartcvs-src/messages/SmartCvsSrcBundle_zh.properties
 ### P-04 版本与目标 IDE
 
 - 官方线冻结于 **223.0 / 2020.3–2022.1.4**；本 fork **独立版本号**（如 `1.x`）。
-- **早期只优先维护者实际使用的 IDE 版本**；未列入 `README.md`「Active maintainer targets」的版本不保证。
-- 抬升平台时：先能编译安装，再修 API 断点，再回归核心 CVS 路径（checkout / update / commit / diff / history）。
+- **早期只优先维护者实际使用的 IDE 版本**；未列入 `README.md` Active 表的版本不保证。
+
+| 优先级 | 维护者在用版本 | 平台线（约） | 用途 |
+| --- | --- | --- | --- |
+| **Primary** | IntelliJ IDEA **2026.2.1** | **262.*** | 首选编译、API 抬升、主安装验证 |
+| **Secondary** | IntelliJ IDEA **2023.2.8** | **232.*** | 次要安装冒烟 / 回归 |
+
+- 抬升平台顺序：先在 **2026.2.1** 上能编译安装 → 再在 **2023.2.8** 上冒烟 → 最后才写宽 `sinceBuild`/`untilBuild`。
+- 核心回归路径：checkout / update / commit / diff / history（两台 Active IDE 至少各做一次最小冒烟，条件允许时）。
 
 ## 3. 目录地图（只读导航）
 

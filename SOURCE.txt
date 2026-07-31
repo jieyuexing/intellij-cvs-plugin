@@ -27,6 +27,9 @@ Listing:   https://plugins.jetbrains.com/plugin/10746-cvs
 Last ver:  223.0  (since 203.1 — until 221.*; IDEA 2020.3 — 2022.1.4)
 Posture:   JetBrains line stopped advancing; community fork restarts maintenance.
 Early policy: only IDE versions the maintainer actually uses are prioritized.
+Active targets (2026-07):
+  primary:   IntelliJ IDEA 2026.2.1  (platform ~262.*)
+  secondary: IntelliJ IDEA 2023.2.8  (platform ~232.*)
 
 Intentionally unchanged
 -----------------------

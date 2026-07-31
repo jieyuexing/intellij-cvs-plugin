@@ -77,16 +77,23 @@ This is a **restart**, not a promise of full multi-version support.
 
 ### Target IDE versions (living table)
 
-Update this table when a version is adopted or dropped.
+Update this table when a version is adopted or dropped.  
+Maintainer machines currently run the two **Active** rows only.
 
-| Priority | IDE / platform | Status | Notes |
-| --- | --- | --- | --- |
-| Baseline (upstream last) | IDEA `2020.3` – `2022.1.4` / builds `203` – `221` | Historical (official 223.0) | Reference only; not the fork’s main track |
-| Source tree default | Gradle fragment targets `2022.3` | Unverified | From obsolete-plugins copy; build wiring incomplete |
-| **Active maintainer targets** | *TBD — fill with versions you use* | Planned | e.g. the IDEA build on your daily machine |
-| Out of scope for now | Versions the maintainer does not run | Best-effort / later | No commitment until adopted in this table |
+| Priority | IDE / platform | Approx. build line | Status | Notes |
+| --- | --- | --- | --- | --- |
+| Baseline (upstream last) | IDEA `2020.3` – `2022.1.4` | `203` – `221` | Historical (official 223.0) | Reference only; not the fork’s main track |
+| Source tree default | obsolete-plugins fragment | `2022.3` / `223` | Unverified | Gradle still incomplete; not a maintainer install target |
+| **Active (primary)** | **IntelliJ IDEA `2026.2.1`** | **`262.*`** | **Adopted** | Newer daily IDE; preferred compile / API-lift target when wiring Gradle |
+| **Active (secondary)** | **IntelliJ IDEA `2023.2.8`** | **`232.*`** | **Adopted** | Older daily IDE; smoke / regression after primary builds work |
+| Out of scope for now | Other IDE versions | — | Best-effort / later | No commitment until added as Active |
 
-When you pick a daily IDE, add a row here and set `intellij { version }` / `sinceBuild` / `untilBuild` accordingly.
+**Early build strategy**
+
+1. Get a standalone Gradle build that can produce a plugin zip installable on **2026.2.1** (primary).
+2. Install the same (or a compatibility-checked) artifact on **2023.2.8** and smoke core CVS paths.
+3. Set `sinceBuild` / `untilBuild` only after both Active targets have been tried; do not claim the full `232`–`262` span until verified.
+4. Official `223.0` range stays historical; no obligation to keep `2020.3`–`2022.1.4` working on this fork.
 
 ## Identity (maintainer = jieyuexing)
 
@@ -118,10 +125,11 @@ Early fork setup:
 - [x] Fork identity (id / vendor / description)
 - [x] Document official freeze (223.0 / 2020.3–2022.1.4) and restart timeline
 - [x] `AGENTS.md` (preserve code / decouple / en+zh labels)
+- [x] Maintainer targets: IDEA **2026.2.1** (primary), **2023.2.8** (secondary)
 - [ ] Standalone Gradle build (settings, wrapper, intellij plugin wiring)
-- [ ] First maintainer-target IDE chosen and listed above
+- [ ] Build + install smoke on **2026.2.1**
+- [ ] Install smoke on **2023.2.8**
 - [ ] `CvsBundle_zh.properties` (and sibling bundles) initial pass
-- [ ] Verified build / install on that target
 - [ ] Optional Marketplace (community) publish
 
 ## Build (not ready yet)
