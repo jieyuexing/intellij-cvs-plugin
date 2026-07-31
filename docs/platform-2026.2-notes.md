@@ -48,14 +48,16 @@ cd /path/to/intellij-cvs-plugin
 ```bash
 export JAVA_HOME="$HOME/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Home"
 ./gradlew buildPlugin
-# -> build/distributions/intellij-cvs-plugin-1.0.0-SNAPSHOT.zip
+# -> build/distributions/intellij-cvs-plugin-262.0.zip
 ```
+
+**Version:** `262.0` = IDEA **2026.2** platform line (same scheme as official `223.0` for 2022.3). Not sequential 224 after 223.
 
 ### Install smoke on 2026.2.1
 
 1. IDEA → Settings → Plugins → ⚙️ → Install Plugin from Disk…  
-2. Choose `build/distributions/intellij-cvs-plugin-1.0.0-SNAPSHOT.zip`  
-3. Restart; confirm **CVS (Community)** appears (id `io.github.jieyuexing.cvs`).  
+2. Choose `build/distributions/intellij-cvs-plugin-262.0.zip`  
+3. Restart; confirm **CVS (Community)** appears (id `io.github.jieyuexing.cvs`, version **262.0**).  
 4. Optional: open a CVS working copy; try Browse / Checkout / Update / History.
 
 ## Next steps

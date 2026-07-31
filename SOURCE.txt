@@ -19,7 +19,7 @@ vendor:                jieyuexing
 vendor url:            https://github.com/jieyuexing
 vendor email:          jieyuexing@outlook.com
 Maven/Gradle group:    io.github.jieyuexing
-version series:        1.0.0-SNAPSHOT (fork numbering; not JetBrains 223.x)
+version series:        262.0 (aligns with IDEA 2026.2 / platform 262; official last was 223.0)
 
 Official Marketplace (frozen)
 -----------------------------
@@ -30,7 +30,7 @@ Early policy: only IDE versions the maintainer actually uses are prioritized.
 Active targets (2026-07):
   primary:   IntelliJ IDEA 2026.2.1  (platform ~262.*; compileJava + buildPlugin green)
   secondary: IntelliJ IDEA 2023.2.8  (platform ~232.*)
-Artifact:    build/distributions/intellij-cvs-plugin-1.0.0-SNAPSHOT.zip
+Artifact:    build/distributions/intellij-cvs-plugin-262.0.zip
 Build notes: docs/platform-2026.2-notes.md
 
 

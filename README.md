@@ -47,7 +47,7 @@ JetBrains deprecated CVS support, moved the code to `intellij-obsolete-plugins`,
 | ~2020.3 – 2022.1 | Official Marketplace builds still install on IDEA in this window (`since`/`until` on 223.0). |
 | **2022-12** | Official Marketplace **`223.0`** published — **last known JetBrains line**. Compatibility capped at **`221.*` / IDEA 2022.1.4**. |
 | 2023+ | Platform moves on (`222`, `223`, `231`, …). Official CVS stays at 223.0; newer IDEs cannot use it within declared compatibility. |
-| **2026-07** | This fork starts: source taken from obsolete-plugins/cvs, new id `io.github.jieyuexing.cvs`, vendor `jieyuexing`, independent versioning from `1.0.0-SNAPSHOT`. |
+| **2026-07** | This fork starts: source taken from obsolete-plugins/cvs, new id `io.github.jieyuexing.cvs`, vendor `jieyuexing`, version **`262.0`** aligned with IDEA **2026.2** (platform `262`). |
 
 ```text
   IDE bundled / main tree          obsolete-plugins + Marketplace
@@ -72,7 +72,7 @@ This is a **restart**, not a promise of full multi-version support.
 | Rule | Meaning |
 | --- | --- |
 | Official line is historical | Do not expect JetBrains to ship past 223.0 / 2022.1.4. |
-| New id, new series | Community builds use `io.github.jieyuexing.cvs` and `1.x` (or later) versioning — not JetBrains `223.0`. |
+| New id; version follows IDEA train | Plugin id is `io.github.jieyuexing.cvs`. **Version major matches IDEA platform line** (official last `223.0` for 2022.3; this fork **`262.0`** for 2026.2). |
 | **Maintainer-first targets** | Early on, **only IntelliJ / platform versions that the maintainer actually uses** will be prioritized for build, smoke test, and fix. |
 | Others welcome but not guaranteed | Issues and PRs for other IDE versions are welcome; they may wait until the maintainer can run that version, or until a contributor owns the verification. |
 | No “supports all latest IDEA” claim | Compatibility is whatever is currently listed in `sinceBuild` / `untilBuild` and the table below — nothing more. |
@@ -138,7 +138,7 @@ Early fork setup:
 - [x] Chinese README (`README_ZH.md`)
 - [x] Standalone Gradle (Platform Plugin 2.18.1, Java 25, `since`/`until` = `262` / `262.*`)
 - [x] `compileJava` green on **2026.2.1**
-- [x] `buildPlugin` green → `build/distributions/intellij-cvs-plugin-1.0.0-SNAPSHOT.zip`
+- [x] `buildPlugin` green → `build/distributions/intellij-cvs-plugin-262.0.zip`
 - [ ] Install smoke on **2026.2.1** (from disk)
 - [ ] Install smoke on **2023.2.8**
 - [ ] `CvsBundle_zh.properties` (and sibling bundles) initial pass
@@ -150,8 +150,10 @@ Early fork setup:
 # Use JBR 25 from IDEA 2026.2.1
 export JAVA_HOME="$HOME/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Home"
 ./gradlew buildPlugin
-# artifact: build/distributions/intellij-cvs-plugin-1.0.0-SNAPSHOT.zip
+# artifact: build/distributions/intellij-cvs-plugin-262.0.zip
 ```
+
+**Versioning:** same convention as JetBrains’ last official **`223.0`** (IDEA 2022.3 / platform 223). Community builds use **`262.0`** for IDEA **2026.2** (platform `262`); later platform trains → `263.x`, `241.x`, etc.
 
 Install: Settings → Plugins → ⚙️ → Install Plugin from Disk… → pick the zip → restart.  
 Details: [docs/platform-2026.2-notes.md](docs/platform-2026.2-notes.md).

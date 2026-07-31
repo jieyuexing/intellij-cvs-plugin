@@ -47,7 +47,7 @@ JetBrains 已弃用 CVS 支持，把代码迁到 `intellij-obsolete-plugins`，�
 | 约 2020.3 – 2022.1 | 官方 Marketplace 包仍可在该窗口内的 IDEA 上安装（223.0 的 `since`/`until`）。 |
 | **2022-12** | 官方 Marketplace 发布 **`223.0`** —— **已知最后一版 JetBrains 线**。兼容上限 **`221.*` / IDEA 2022.1.4**。 |
 | 2023+ | 平台继续前进（`222`、`223`、`231`…）。官方 CVS 停在 223.0；更新 IDE 在声明兼容范围内无法使用。 |
-| **2026-07** | 本 fork 启动：源码取自 obsolete-plugins/cvs，新 id `io.github.jieyuexing.cvs`，vendor `jieyuexing`，独立版本从 `1.0.0-SNAPSHOT` 起。 |
+| **2026-07** | 本 fork 启动：源码取自 obsolete-plugins/cvs，新 id `io.github.jieyuexing.cvs`，vendor `jieyuexing`，版本 **`262.0`** 与 IDEA **2026.2**（平台 `262`）对齐。 |
 
 ```text
   IDE 内置 / 主源码树              obsolete-plugins + Marketplace
@@ -72,7 +72,7 @@ JetBrains 已弃用 CVS 支持，把代码迁到 `intellij-obsolete-plugins`，�
 | 规则 | 含义 |
 | --- | --- |
 | 官方线仅作历史 | 不要指望 JetBrains 再发超过 223.0 / 2022.1.4 的版本。 |
-| 新 id、新版本序列 | 社区构建使用 `io.github.jieyuexing.cvs` 与 `1.x`（及以后），不是 JetBrains 的 `223.0`。 |
+| 新 id；版本对齐 IDEA 平台线 | Plugin id 为 `io.github.jieyuexing.cvs`。**版本主号与 IDEA 平台线一致**（官方最后 `223.0` = 2022.3；本 fork **`262.0`** = 2026.2）。 |
 | **维护者优先目标** | 早期只优先**维护者本人实际使用的** IntelliJ / 平台版本：构建、冒烟、修 bug。 |
 | 其它版本欢迎但不保证 | 其它 IDE 版本的 Issue / PR 欢迎；可能要等维护者能跑到该版本，或由贡献者负责验证。 |
 | 不宣称「支持全部最新 IDEA」 | 兼容性以当前 `sinceBuild` / `untilBuild` 与下表为准，不多写。 |
@@ -138,7 +138,7 @@ JetBrains 已弃用 CVS 支持，把代码迁到 `intellij-obsolete-plugins`，�
 - [x] 中文 README（本文件）  
 - [x] 独立 Gradle（Platform Plugin 2.18.1、Java 25、`since`/`until` = `262` / `262.*`）  
 - [x] **2026.2.1** 上 `compileJava` 变绿  
-- [x] `buildPlugin` 变绿 → `build/distributions/intellij-cvs-plugin-1.0.0-SNAPSHOT.zip`  
+- [x] `buildPlugin` 变绿 → `build/distributions/intellij-cvs-plugin-262.0.zip`  
 - [ ] **2026.2.1** 安装冒烟（从磁盘安装）  
 - [ ] **2023.2.8** 安装冒烟  
 - [ ] `CvsBundle_zh.properties`（及兄弟 bundle）初译  
@@ -150,8 +150,10 @@ JetBrains 已弃用 CVS 支持，把代码迁到 `intellij-obsolete-plugins`，�
 # 使用 IDEA 2026.2.1 自带的 JBR 25
 export JAVA_HOME="$HOME/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Home"
 ./gradlew buildPlugin
-# 产物: build/distributions/intellij-cvs-plugin-1.0.0-SNAPSHOT.zip
+# 产物: build/distributions/intellij-cvs-plugin-262.0.zip
 ```
+
+**版本约定：** 与官方最后一版 **`223.0`**（IDEA 2022.3 / 平台 223）同一套接法——插件主号跟 IDEA 平台线。社区当前主目标是 IDEA **2026.2** → **`262.0`**；以后抬平台再发 `263.x` 等。
 
 安装：设置 → 插件 → ⚙️ → 从磁盘安装插件… → 选 zip → 重启。  
 细节见 [docs/platform-2026.2-notes.md](docs/platform-2026.2-notes.md)。
