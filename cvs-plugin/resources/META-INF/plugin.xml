@@ -13,8 +13,8 @@
       (<a href="https://plugins.jetbrains.com/plugin/10746-cvs">10746-cvs</a>)
       last released <b>223.0</b> for IDEA <b>2020.3 — 2022.1.4</b> (builds 203.1 — 221.*)
       and is not advancing further. This project restarts maintenance under a new plugin id.
-      Early builds prioritize the maintainer's IDEs:
-      IntelliJ IDEA <b>2026.2.1</b> (primary) and <b>2023.2.8</b> (secondary).<br>
+      Compatible with IntelliJ IDEA <b>2023.2</b> (build 232) through <b>2026.2</b> (build 262).
+      Maintainer primary: 2026.2.1; secondary: 2023.2.8.<br>
       Upstream source:
       <a href="https://github.com/JetBrains/intellij-obsolete-plugins/tree/master/cvs">JetBrains/intellij-obsolete-plugins (cvs)</a><br>
       Maintainer repository:

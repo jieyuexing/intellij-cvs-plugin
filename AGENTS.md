@@ -89,11 +89,12 @@ smartcvs-src/messages/SmartCvsSrcBundle_zh.properties
 
 | 优先级 | 维护者在用版本 | 平台线（约） | 用途 |
 | --- | --- | --- | --- |
-| **Primary（已钉）** | IntelliJ IDEA **2026.2.1** | **262.***（本机 `262.9437.22`） | Gradle 目标；`pluginSinceBuild=262` / `until=262.*`；编译用 **JBR 25** |
-| **Secondary** | IntelliJ IDEA **2023.2.8** | **232.*** | 主目标变绿后再冒烟 |
+| **Primary（已钉）** | IntelliJ IDEA **2026.2.1** | **262.*** | 编译 classpath（local 2026.2 + JBR 25 读平台） |
+| **Secondary** | IntelliJ IDEA **2023.2.8** | **232.*** | 安装范围含 232；产出 **Java 17** 字节码 |
 
-- 构建说明：`docs/platform-2026.2-notes.md`；默认优先 `local()` 本机 2026.2 安装。
-- 抬升顺序：~~Gradle 接线~~ → ~~`compileJava` 绿~~ → ~~`buildPlugin` 绿~~ → **2026.2.1 安装冒烟** → 2023.2.8 冒烟 → 再写宽 `since`/`until`。
+- 安装元数据：`pluginSinceBuild=232` / `pluginUntilBuild=262.*`（两台维护机都能装）。
+- 构建说明：`docs/platform-2026.2-notes.md`。
+- 注意：源码按 262 API 适配；232 上个别新 API 路径可能运行期才暴露问题，优先修双端兼容。
 - 核心回归路径：checkout / update / commit / diff / history。
 
 ## 3. 目录地图（只读导航）

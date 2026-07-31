@@ -52,7 +52,9 @@ python3 scripts/check_i18n_keys.py
 # -> build/distributions/intellij-cvs-plugin-262.1.zip
 ```
 
-**Version:** `262.x` = IDEA **2026.2** platform line (same scheme as official `223.0` for 2022.3). **262.1** adds zh ResourceBundles.
+**Version:** `262.x` = IDEA **2026.2** platform line (same scheme as official `223.0` for 2022.3).  
+**262.1** adds zh ResourceBundles.  
+**262.2** sets `since-build=232` / `until-build=262.*` and emits **Java 17** class files so IDEA **2023.2.8** (`IU-232.*`) can install and load the same zip (compile still uses 2026.2 APIs + JDK 25 to *read* platform jars).
 
 ### i18n (en + zh)
 

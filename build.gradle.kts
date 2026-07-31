@@ -1,7 +1,9 @@
 // Maintainer: jieyuexing
 // Fork of: https://github.com/JetBrains/intellij-obsolete-plugins/tree/master/cvs
-// Primary target: IntelliJ IDEA 2026.2.1 (build 262.*)
-// Secondary (later): IntelliJ IDEA 2023.2.8 (build 232.*)
+//
+// Install range: IU-232 … IU-262.* (both maintainer IDEs).
+// Compile against local 2026.2 (APIs we adapted to) with Java 17 bytecode
+// so IU-232 can load the class files (Java 25 bytecode would be rejected).
 
 plugins {
     id("java")
@@ -18,7 +20,6 @@ repositories {
     }
 }
 
-// Preserve upstream multi-root layout (no mass source move).
 sourceSets {
     main {
         java.setSrcDirs(
@@ -44,39 +45,37 @@ sourceSets {
 }
 
 dependencies {
-    // Upstream bundled SSH client (sources under trilead-ssh2-build213/ are reference-only)
     implementation(files("lib/trilead-ssh2-build213.jar"))
 
     intellijPlatform {
-        // Nail primary: prefer local 2026.2.1 install; fall back to Maven coordinates.
+        // Prefer primary local 2026.2 for compile classpath (source was adapted to it).
         val localCandidates = listOf(
             file("${System.getProperty("user.home")}/Applications/IntelliJ IDEA.app"),
-            file("/Applications/IntelliJ IDEA Ultimate.app"),
             file("/Applications/IntelliJ IDEA.app"),
+            file("/Applications/IntelliJ IDEA Ultimate.app"),
         )
-        val localIde = localCandidates.firstOrNull { candidate ->
-            val info = candidate.resolve("Contents/Resources/product-info.json")
+        val local262 = localCandidates.firstOrNull { app ->
+            val info = app.resolve("Contents/Resources/product-info.json")
             info.isFile && info.readText().contains("2026.2")
         }
-        if (localIde != null) {
-            local(localIde)
+        if (local262 != null) {
+            local(local262)
         } else {
-            val type = providers.gradleProperty("platformType")
-            val ver = providers.gradleProperty("platformVersion")
-            create(type, ver)
+            create(
+                providers.gradleProperty("platformType").orElse("IU"),
+                providers.gradleProperty("platformVersion").orElse("2026.2.1"),
+            )
         }
 
-        // Local IDE default CP only exposes vcs.core / vcs — not impl UI/vfs helpers.
-        // plugin.xml depends on modules.vcs; compile needs impl for VcsVirtualFile, balloons, etc.
         bundledModule("intellij.platform.vcs.impl")
         bundledModule("intellij.platform.vcs.impl.lang")
-        // DatePicker used by date/revision UI (bundled in IDE but not on default CP)
         bundledLibrary("lib/intellij.libraries.microba.jar")
     }
 }
 
 java {
-    // IDEA 2026.2 ships bytecode 69 (Java 25); compile with the same major.
+    // JDK 25 required to *read* 2026.2 platform class files (major 69).
+    // Still emit release=17 so IDEA 2023.2 (232) can *load* our plugin classes.
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(25))
     }
@@ -91,8 +90,9 @@ intellijPlatform {
         version = providers.gradleProperty("pluginVersion")
 
         ideaVersion {
-            sinceBuild = providers.gradleProperty("pluginSinceBuild")
-            untilBuild = providers.gradleProperty("pluginUntilBuild")
+            // Allow install on maintainer secondary IDE (232) through primary (262).
+            sinceBuild = providers.gradleProperty("pluginSinceBuild").orElse("232")
+            untilBuild = providers.gradleProperty("pluginUntilBuild").orElse("262.*")
         }
     }
 }
@@ -100,10 +100,10 @@ intellijPlatform {
 tasks {
     withType<JavaCompile>().configureEach {
         options.encoding = "UTF-8"
+        options.release.set(17)
         options.compilerArgs.add("-Xlint:none")
     }
 
-    // First milestone: main sources for 2026.2.1. Upstream tests deferred.
     named<Test>("test") {
         enabled = false
     }

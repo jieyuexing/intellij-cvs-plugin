@@ -86,8 +86,8 @@ JetBrains 已弃用 CVS 支持，把代码迁到 `intellij-obsolete-plugins`，�
 | --- | --- | --- | --- | --- |
 | 基线（上游最后） | IDEA `2020.3` – `2022.1.4` | `203` – `221` | 历史（官方 223.0） | 仅作对照；不是本 fork 主线 |
 | 源码树默认 | obsolete-plugins 片段 | `2022.3` / `223` | 未验证 | Gradle 尚未独立；不是维护者安装目标 |
-| **Active（主）** | **IntelliJ IDEA `2026.2.1`** | **`262.*`**（本机 `262.9437.22`） | **构建已绿** | `compileJava` + `buildPlugin` 通过；安装冒烟待做 |
-| **Active（次）** | **IntelliJ IDEA `2023.2.8`** | **`232.*`** | **已采纳（靠后）** | 主目标变绿后再冒烟 |
+| **Active（主）** | **IntelliJ IDEA `2026.2.1`** | **`262.*`** | **支持** | 编译 classpath；安装范围含 262 |
+| **Active（次）** | **IntelliJ IDEA `2023.2.8`** | **`232.*`** | **支持（可安装）** | `sinceBuild=232`；Java 17 字节码供 IU-232 加载 |
 | 暂不覆盖 | 其它 IDE 版本 | — | 尽力 / 以后 | 未写入 Active 前不作承诺 |
 
 **早期构建策略**
@@ -138,7 +138,7 @@ JetBrains 已弃用 CVS 支持，把代码迁到 `intellij-obsolete-plugins`，�
 - [x] 中文 README（本文件）  
 - [x] 独立 Gradle（Platform Plugin 2.18.1、Java 25、`since`/`until` = `262` / `262.*`）  
 - [x] **2026.2.1** 上 `compileJava` 变绿  
-- [x] `buildPlugin` 变绿（版本 **262.1**，含中文 Bundle）  
+- [x] `buildPlugin` 变绿（版本 **262.2**：since **232** … until **262.***，Java 17，含中文 Bundle）  
 - [x] `CvsBundle_zh` 及兄弟 bundle；随 IDEA 界面语言自动切换（`DynamicBundle`）  
 - [x] Task 机制：[docs/task-mechanism.md](docs/task-mechanism.md) + harness Task `task-intellij-cvs-i18n-zh-v1`  
 - [ ] **2026.2.1** 安装冒烟（中文 UI 下重装 262.1 zip）  
@@ -152,10 +152,12 @@ JetBrains 已弃用 CVS 支持，把代码迁到 `intellij-obsolete-plugins`，�
 export JAVA_HOME="$HOME/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Home"
 python3 scripts/check_i18n_keys.py
 ./gradlew buildPlugin
-# 产物: build/distributions/intellij-cvs-plugin-262.1.zip
+# 产物: build/distributions/intellij-cvs-plugin-262.2.zip
 ```
 
-**版本约定：** 与官方最后一版 **`223.0`**（IDEA 2022.3 / 平台 223）同一套接法——插件主号跟 IDEA 平台线。社区当前主目标是 IDEA **2026.2** → **`262.x`**；**262.1** 增加中文本地化。
+**版本约定：** 主号对齐 IDEA **2026.2** 平台线（`262.x`）。  
+**安装范围：** `since-build=232` … `until-build=262.*`（IDEA **2023.2**～**2026.2**）。  
+**262.2：** 兼容 IU-232 安装，并输出 Java 17 字节码（避免 2023.2.8 报「需要 262」或类版本过高）。
 
 **多语言：** 英文基线 + `*_zh.properties`。IDEA 界面语言为中文时，文案自动切换（无需插件内开关）。
 

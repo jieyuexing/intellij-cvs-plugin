@@ -86,8 +86,8 @@ Maintainer machines currently run the two **Active** rows only.
 | --- | --- | --- | --- | --- |
 | Baseline (upstream last) | IDEA `2020.3` – `2022.1.4` | `203` – `221` | Historical (official 223.0) | Reference only; not the fork’s main track |
 | Source tree default | obsolete-plugins fragment | `2022.3` / `223` | Unverified | Gradle still incomplete; not a maintainer install target |
-| **Active (primary)** | **IntelliJ IDEA `2026.2.1`** | **`262.*`** (`262.9437.22` local) | **Build green** | `compileJava` + `buildPlugin` OK; install smoke pending |
-| **Active (secondary)** | **IntelliJ IDEA `2023.2.8`** | **`232.*`** | **Adopted (later)** | After primary is green |
+| **Active (primary)** | **IntelliJ IDEA `2026.2.1`** | **`262.*`** | **Supported** | Compile classpath; install range includes 262 |
+| **Active (secondary)** | **IntelliJ IDEA `2023.2.8`** | **`232.*`** | **Supported (install)** | `sinceBuild=232`; Java 17 bytecode so IU-232 can load |
 | Out of scope for now | Other IDE versions | — | Best-effort / later | No commitment until added as Active |
 
 **Early build strategy**
@@ -138,7 +138,7 @@ Early fork setup:
 - [x] Chinese README (`README_ZH.md`)
 - [x] Standalone Gradle (Platform Plugin 2.18.1, Java 25, `since`/`until` = `262` / `262.*`)
 - [x] `compileJava` green on **2026.2.1**
-- [x] `buildPlugin` green (version **262.1** with zh bundles)
+- [x] `buildPlugin` green (version **262.2**: since **232** … until **262.***, Java 17 classes, zh bundles)
 - [x] `CvsBundle_zh` + sibling bundles; IDEA locale auto-switch via `DynamicBundle`
 - [x] Task mechanism: [docs/task-mechanism.md](docs/task-mechanism.md) + harness Task `task-intellij-cvs-i18n-zh-v1`
 - [ ] Install smoke on **2026.2.1** (reinstall 262.1 zip under Chinese UI)
@@ -152,10 +152,12 @@ Early fork setup:
 export JAVA_HOME="$HOME/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Home"
 python3 scripts/check_i18n_keys.py
 ./gradlew buildPlugin
-# artifact: build/distributions/intellij-cvs-plugin-262.1.zip
+# artifact: build/distributions/intellij-cvs-plugin-262.2.zip
 ```
 
-**Versioning:** same convention as JetBrains’ last official **`223.0`** (IDEA 2022.3 / platform 223). Community builds use **`262.x`** for IDEA **2026.2** (platform `262`); **262.1** adds zh localization.
+**Versioning:** major tracks IDEA **2026.2** train (`262.x`).  
+**Install range:** `since-build=232` … `until-build=262.*` (IDEA **2023.2** through **2026.2**).  
+**262.2:** widen range for IU-232 + emit Java 17 class files (avoids “needs 262” / class-version rejection on 2023.2.8).
 
 **i18n:** English baseline + `*_zh.properties`. With IDEA UI language = Chinese, labels switch automatically (no manual toggle).
 
