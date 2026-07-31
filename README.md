@@ -138,10 +138,11 @@ Early fork setup:
 - [x] Chinese README (`README_ZH.md`)
 - [x] Standalone Gradle (Platform Plugin 2.18.1, Java 25, `since`/`until` = `262` / `262.*`)
 - [x] `compileJava` green on **2026.2.1**
-- [x] `buildPlugin` green → `build/distributions/intellij-cvs-plugin-262.0.zip`
-- [ ] Install smoke on **2026.2.1** (from disk)
+- [x] `buildPlugin` green (version **262.1** with zh bundles)
+- [x] `CvsBundle_zh` + sibling bundles; IDEA locale auto-switch via `DynamicBundle`
+- [x] Task mechanism: [docs/task-mechanism.md](docs/task-mechanism.md) + harness Task `task-intellij-cvs-i18n-zh-v1`
+- [ ] Install smoke on **2026.2.1** (reinstall 262.1 zip under Chinese UI)
 - [ ] Install smoke on **2023.2.8**
-- [ ] `CvsBundle_zh.properties` (and sibling bundles) initial pass
 - [ ] Optional Marketplace (community) publish
 
 ## Build (2026.2.1)
@@ -149,14 +150,17 @@ Early fork setup:
 ```bash
 # Use JBR 25 from IDEA 2026.2.1
 export JAVA_HOME="$HOME/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Home"
+python3 scripts/check_i18n_keys.py
 ./gradlew buildPlugin
-# artifact: build/distributions/intellij-cvs-plugin-262.0.zip
+# artifact: build/distributions/intellij-cvs-plugin-262.1.zip
 ```
 
-**Versioning:** same convention as JetBrains’ last official **`223.0`** (IDEA 2022.3 / platform 223). Community builds use **`262.0`** for IDEA **2026.2** (platform `262`); later platform trains → `263.x`, `241.x`, etc.
+**Versioning:** same convention as JetBrains’ last official **`223.0`** (IDEA 2022.3 / platform 223). Community builds use **`262.x`** for IDEA **2026.2** (platform `262`); **262.1** adds zh localization.
+
+**i18n:** English baseline + `*_zh.properties`. With IDEA UI language = Chinese, labels switch automatically (no manual toggle).
 
 Install: Settings → Plugins → ⚙️ → Install Plugin from Disk… → pick the zip → restart.  
-Details: [docs/platform-2026.2-notes.md](docs/platform-2026.2-notes.md).
+Details: [docs/platform-2026.2-notes.md](docs/platform-2026.2-notes.md) · Tasks: [docs/task-mechanism.md](docs/task-mechanism.md).
 
 ## Layout
 

@@ -138,10 +138,11 @@ JetBrains 已弃用 CVS 支持，把代码迁到 `intellij-obsolete-plugins`，�
 - [x] 中文 README（本文件）  
 - [x] 独立 Gradle（Platform Plugin 2.18.1、Java 25、`since`/`until` = `262` / `262.*`）  
 - [x] **2026.2.1** 上 `compileJava` 变绿  
-- [x] `buildPlugin` 变绿 → `build/distributions/intellij-cvs-plugin-262.0.zip`  
-- [ ] **2026.2.1** 安装冒烟（从磁盘安装）  
+- [x] `buildPlugin` 变绿（版本 **262.1**，含中文 Bundle）  
+- [x] `CvsBundle_zh` 及兄弟 bundle；随 IDEA 界面语言自动切换（`DynamicBundle`）  
+- [x] Task 机制：[docs/task-mechanism.md](docs/task-mechanism.md) + harness Task `task-intellij-cvs-i18n-zh-v1`  
+- [ ] **2026.2.1** 安装冒烟（中文 UI 下重装 262.1 zip）  
 - [ ] **2023.2.8** 安装冒烟  
-- [ ] `CvsBundle_zh.properties`（及兄弟 bundle）初译  
 - [ ] 可选：社区 Marketplace 发布  
 
 ## 构建（2026.2.1）
@@ -149,14 +150,17 @@ JetBrains 已弃用 CVS 支持，把代码迁到 `intellij-obsolete-plugins`，�
 ```bash
 # 使用 IDEA 2026.2.1 自带的 JBR 25
 export JAVA_HOME="$HOME/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Home"
+python3 scripts/check_i18n_keys.py
 ./gradlew buildPlugin
-# 产物: build/distributions/intellij-cvs-plugin-262.0.zip
+# 产物: build/distributions/intellij-cvs-plugin-262.1.zip
 ```
 
-**版本约定：** 与官方最后一版 **`223.0`**（IDEA 2022.3 / 平台 223）同一套接法——插件主号跟 IDEA 平台线。社区当前主目标是 IDEA **2026.2** → **`262.0`**；以后抬平台再发 `263.x` 等。
+**版本约定：** 与官方最后一版 **`223.0`**（IDEA 2022.3 / 平台 223）同一套接法——插件主号跟 IDEA 平台线。社区当前主目标是 IDEA **2026.2** → **`262.x`**；**262.1** 增加中文本地化。
+
+**多语言：** 英文基线 + `*_zh.properties`。IDEA 界面语言为中文时，文案自动切换（无需插件内开关）。
 
 安装：设置 → 插件 → ⚙️ → 从磁盘安装插件… → 选 zip → 重启。  
-细节见 [docs/platform-2026.2-notes.md](docs/platform-2026.2-notes.md)。
+细节见 [docs/platform-2026.2-notes.md](docs/platform-2026.2-notes.md) · 任务：[docs/task-mechanism.md](docs/task-mechanism.md)。
 
 ## 目录结构
 

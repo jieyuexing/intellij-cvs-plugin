@@ -47,18 +47,30 @@ cd /path/to/intellij-cvs-plugin
 
 ```bash
 export JAVA_HOME="$HOME/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Home"
+python3 scripts/check_i18n_keys.py
 ./gradlew buildPlugin
-# -> build/distributions/intellij-cvs-plugin-262.0.zip
+# -> build/distributions/intellij-cvs-plugin-262.1.zip
 ```
 
-**Version:** `262.0` = IDEA **2026.2** platform line (same scheme as official `223.0` for 2022.3). Not sequential 224 after 223.
+**Version:** `262.x` = IDEA **2026.2** platform line (same scheme as official `223.0` for 2022.3). **262.1** adds zh ResourceBundles.
+
+### i18n (en + zh)
+
+| File | Role |
+| --- | --- |
+| `CvsBundle.properties` | English baseline |
+| `CvsBundle_zh.properties` | Chinese — auto when IDEA UI locale is zh |
+| `JavaCvsSrcBundle_zh.properties` / `SmartCvsSrcBundle_zh.properties` | Secondary bundles |
+
+No manual language switch in the plugin: IntelliJ `DynamicBundle` follows IDE display language.
 
 ### Install smoke on 2026.2.1
 
 1. IDEA → Settings → Plugins → ⚙️ → Install Plugin from Disk…  
-2. Choose `build/distributions/intellij-cvs-plugin-262.0.zip`  
-3. Restart; confirm **CVS (Community)** appears (id `io.github.jieyuexing.cvs`, version **262.0**).  
-4. Optional: open a CVS working copy; try Browse / Checkout / Update / History.
+2. Choose `build/distributions/intellij-cvs-plugin-262.1.zip`  
+3. Restart; confirm **CVS (Community)** (id `io.github.jieyuexing.cvs`, version **262.1**).  
+4. With **Chinese** UI language: Settings → Version Control → CVS / Global Settings should show Chinese labels.  
+5. Optional: open a CVS working copy; try Browse / Checkout / Update / History.
 
 ## Next steps
 

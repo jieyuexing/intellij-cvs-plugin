@@ -70,12 +70,15 @@
 
 ```text
 cvs-core/resources/messages/CvsBundle.properties          # en 基线
-cvs-core/resources/messages/CvsBundle_zh.properties       # zh（待建/维护）
+cvs-core/resources/messages/CvsBundle_zh.properties       # zh（IDEA 中文 UI 自动加载）
 javacvs-src/messages/JavaCvsSrcBundle.properties
 javacvs-src/messages/JavaCvsSrcBundle_zh.properties
 smartcvs-src/messages/SmartCvsSrcBundle.properties
 smartcvs-src/messages/SmartCvsSrcBundle_zh.properties
 ```
+
+校验：`python3 scripts/check_i18n_keys.py`  
+任务机制：`docs/task-mechanism.md`（harness Task Store + 本仓 Status）
 
 `plugin.xml` 的 `<description>`、Marketplace 长文案可中英分场景维护，但 **IDE 内 label 以 Bundle 为准**。
 
