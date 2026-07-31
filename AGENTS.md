@@ -102,13 +102,14 @@ smartcvs-src/messages/SmartCvsSrcBundle_zh.properties
 | `smartcvs-src/` | SmartCVS 相关源码 + 其 Bundle |
 | `trilead-ssh2-build213/`、`lib/` | SSH 依赖 |
 | `testSource/` | 测试 |
-| `README.md` | 人类可读：时间线、官方冻结、维护策略 |
+| `README.md` | 人类可读（英文）：时间线、官方冻结、维护策略 |
+| `README_ZH.md` | 人类可读（中文），与 README 同步维护 |
 | `SOURCE.txt` | 出处与身份摘要 |
 | `AGENTS.md` | **本文件**：Agent/协作者工作合同 |
 
 ## 4. Agent 默认工作流
 
-1. **先读** `README.md` + 本文件；改文案时打开对应 `*Bundle*.properties`。
+1. **先读** `README.md` / `README_ZH.md` + 本文件；改文案时打开对应 `*Bundle*.properties`。改 README 时 **en/zh 同提交同步**（或标 `i18n-gap`）。
 2. **再改**：优先最小补丁；身份字段（id/vendor）与用户可见文案按 P-03。
 3. **双语同步**：改 en value 或新增 key 时，**同提交**更新 zh（或标明 `i18n-gap` 与原因）。
 4. **验证**：能构建则 `buildPlugin` / 安装到目标 IDE；至少冒烟文案切换（英文 UI / 中文 UI）。

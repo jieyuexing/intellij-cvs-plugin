@@ -1,5 +1,7 @@
 # intellij-cvs-plugin
 
+**English** | [中文](README_ZH.md)
+
 Community fork of the IntelliJ **CVS** integration plugin, maintained by **jieyuexing**.
 
 **Not affiliated with JetBrains.**
@@ -117,6 +119,13 @@ See **[AGENTS.md](AGENTS.md)** for working rules:
 2. **Decouple and enhance** on top (build, platform adapt, testability) — no big-bang rewrites.
 3. **i18n for user-facing labels**: English baseline + Chinese (`en` + `zh`) for now.
 
+Human-facing docs:
+
+| Language | File |
+| --- | --- |
+| English | [README.md](README.md) (this file) |
+| 中文 | [README_ZH.md](README_ZH.md) |
+
 ## Status
 
 Early fork setup:
@@ -126,6 +135,7 @@ Early fork setup:
 - [x] Document official freeze (223.0 / 2020.3–2022.1.4) and restart timeline
 - [x] `AGENTS.md` (preserve code / decouple / en+zh labels)
 - [x] Maintainer targets: IDEA **2026.2.1** (primary), **2023.2.8** (secondary)
+- [x] Chinese README (`README_ZH.md`)
 - [ ] Standalone Gradle build (settings, wrapper, intellij plugin wiring)
 - [ ] Build + install smoke on **2026.2.1**
 - [ ] Install smoke on **2023.2.8**
