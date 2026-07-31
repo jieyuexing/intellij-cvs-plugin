@@ -102,6 +102,14 @@ When you pick a daily IDE, add a row here and set `intellij { version }` / `sinc
 
 This **plugin id differs** from the original JetBrains id (`CVS`), so it will not replace or conflict with the official Marketplace listing. Uninstall the official CVS plugin if both would be installed.
 
+## Agent / contributor contract
+
+See **[AGENTS.md](AGENTS.md)** for working rules:
+
+1. **Keep original code** by default (minimal diffs; preserve CVS protocol & package layout).
+2. **Decouple and enhance** on top (build, platform adapt, testability) — no big-bang rewrites.
+3. **i18n for user-facing labels**: English baseline + Chinese (`en` + `zh`) for now.
+
 ## Status
 
 Early fork setup:
@@ -109,8 +117,10 @@ Early fork setup:
 - [x] Source copied from archive
 - [x] Fork identity (id / vendor / description)
 - [x] Document official freeze (223.0 / 2020.3–2022.1.4) and restart timeline
+- [x] `AGENTS.md` (preserve code / decouple / en+zh labels)
 - [ ] Standalone Gradle build (settings, wrapper, intellij plugin wiring)
 - [ ] First maintainer-target IDE chosen and listed above
+- [ ] `CvsBundle_zh.properties` (and sibling bundles) initial pass
 - [ ] Verified build / install on that target
 - [ ] Optional Marketplace (community) publish
 
