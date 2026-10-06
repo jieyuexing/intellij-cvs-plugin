@@ -1,6 +1,6 @@
 # Platform target: IntelliJ IDEA 2026.2.1
 
-Status: **`compileJava` green + `buildPlugin` green** on IDEA 2026.2.1 (2026-07-31).
+Status: **`compileJava` green + `buildPlugin` green** on IDEA 2026.2.1 (2026-08-01).
 
 ## Nailed configuration
 
@@ -8,7 +8,7 @@ Status: **`compileJava` green + `buildPlugin` green** on IDEA 2026.2.1 (2026-07-
 | --- | --- |
 | IDE | IntelliJ IDEA **2026.2.1** (IU) |
 | Build | `262.9437.22` (local product-info) |
-| Plugin `since` / `until` | `262` / `262.*` |
+| Plugin `since` / `until` | `232` / `262.*` |
 | Gradle | 9.0.0 wrapper + IntelliJ Platform Gradle Plugin **2.18.1** |
 | Compile JDK | **25** (use IDEA JBR: `…/IntelliJ IDEA.app/Contents/jbr/Contents/Home`) |
 | Platform dependency | Prefer **local** IDE install matching `2026.2`; remote `create(IU, 2026.2.1)` may fail URL resolution |
@@ -48,13 +48,41 @@ cd /path/to/intellij-cvs-plugin
 ```bash
 export JAVA_HOME="$HOME/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Home"
 python3 scripts/check_i18n_keys.py
+python3 scripts/check_rust_roadmap.py
 ./gradlew buildPlugin
-# -> build/distributions/intellij-cvs-plugin-262.1.zip
+# -> build/distributions/intellij-cvs-plugin-262.0.zip
 ```
 
 **Version:** `262.x` = IDEA **2026.2** platform line (same scheme as official `223.0` for 2022.3).  
-**262.1** adds zh ResourceBundles.  
-**262.2** sets `since-build=232` / `until-build=262.*` and emits **Java 17** class files so IDEA **2023.2.8** (`IU-232.*`) can install and load the same zip (compile still uses 2026.2 APIs + JDK 25 to *read* platform jars).
+**262.0 is the initial community release.** All items below were completed before the first public release:
+
+- Add zh ResourceBundles.
+
+- Set `since-build=232` / `until-build=262.*` and emit **Java 17** class files so IDEA **2023.2.8** (`IU-232.*`) can install and load the same zip (compile still uses 2026.2 APIs + JDK 25 to *read* platform jars).
+
+- Optimize repository/status scans and error handling. Rust is not part of the runtime; its benchmark-gated future path is documented in [rust-performance-roadmap.md](rust-performance-roadmap.md).
+
+- Restore nested working-copy discovery for container-level CVS mappings on IDEA 232 without reopening recursive scans of generated directories inside a real working copy.
+
+- Add an on-disk fallback when IDEA 232's initial VFS snapshot does not contain ignored `CVS` admin directories, removing the manual “Reload from Disk” prerequisite.
+
+- Add an opt-in SHA-256 baseline under the IDE system cache for copied working copies whose timestamps no longer match `CVS/Entries`. Status refresh remains offline. Repository-backed `CVS/BaseRevisions` has precedence, so a trusted snapshot cannot mask a locally provable change. The baseline is created or removed from the CVS global menu and never mutates the working copy.
+
+- Harden rollback: byte-identical cached restores do not rewrite the working file, and cache/entry/permission failures propagate through the platform rollback error list. IDEA 232 makes its generic rollback progress non-cancelable, so repository-backed restores are queued into a plugin-owned cancellable background task. Files are grouped by exact `CVS/Entries` revision and sent through batched clean updates instead of two checkout protocol conversations per file. Cancel still runs partial-result cleanup; Entries are reconciled once per directory and VFS parent refreshes are deduplicated. The observed IDEA 232 macOS `Too many nested CFRunLoopRuns` crash is JetBrains Runtime issue [JBR-7659](https://youtrack.jetbrains.com/issue/JBR-7659), fixed in `jbr21.895.105`; the official workaround for users who do not require VoiceOver is `-Dsun.awt.mac.a11y.enabled=false`.
+
+- Make mapped containers discovery-only: a cancellable background scan reads CVS admin markers from disk, publishes only complete root snapshots, refreshes the discovered VFS paths, and triggers the initial dirty scan. ChangeProvider drops dirty paths outside confirmed roots, so generated/runtime siblings are not reported as unversioned.
+
+- Handle IDEA 232's dirty-scope root semantics: a recursively dirty directory is now accepted when it is the explicit scope root, even though `VcsDirtyScope.belongsTo(root)` only recognizes descendants. This lets the first scan enter all discovered working copies without a manual child-directory refresh.
+
+- Extend that compatibility to the full recursive dirty tree. Once an explicit recursive root is accepted, its descendants are processed without repeating IDEA 232's unreliable converted-root membership check, so nested source changes are present on the first scan.
+
+- Anchor the post-discovery dirty scope at each configured mapping container instead of calling `markEverythingDirty()` on converted roots. IDEA 232's `ChangelistBuilder` now accepts the provider output from nested sibling CVS roots and publishes it to the Changes view.
+
+- Add a fail-closed repository verification for timestamp-only false positives. The explicit action runs `cvs -n update` through the existing IDEA connection, captures every server-reported path, and atomically caches only silent candidates whose working metadata and `CVS/Entries` stayed stable. Cancellation or any repository warning/error leaves the prior cache unchanged.
+
+- De-duplicate overlapping recursive dirty scopes before traversal. This prevents mapped containers, converted CVS roots, and explicit descendants from submitting equal `Change` objects more than once in the same refresh.
+
+- Index server-reported paths and check only each candidate's ancestors. This removes the quadratic candidate-by-report comparison from large repository-verification runs.
 
 ### i18n (en + zh)
 
@@ -69,13 +97,23 @@ No manual language switch in the plugin: IntelliJ `DynamicBundle` follows IDE di
 ### Install smoke on 2026.2.1
 
 1. IDEA → Settings → Plugins → ⚙️ → Install Plugin from Disk…  
-2. Choose `build/distributions/intellij-cvs-plugin-262.1.zip`  
-3. Restart; confirm **CVS (Community)** (id `io.github.jieyuexing.cvs`, version **262.1**).  
+2. Choose `build/distributions/intellij-cvs-plugin-262.0.zip`
+3. Restart; confirm **CVS (Community)** (id `io.github.jieyuexing.cvs`, version **262.0**).
 4. With **Chinese** UI language: Settings → Version Control → CVS / Global Settings should show Chinese labels.  
 5. Optional: open a CVS working copy; try Browse / Checkout / Update / History.
+
+### Rollback release gate
+
+Before publishing 262.0, test the same multi-file selection on IDEA 2023.2.8 and 2026.2.1:
+
+1. Roll back files with and without `CVS/BaseRevisions`; cached files should finish locally.
+2. Confirm repository-backed files appear in a separate **Restore** background task with a visible Cancel action.
+3. Cancel mid-run; IDEA must remain responsive and a subsequent refresh must show only files that were not restored.
+4. Complete the run; confirm every file stays on its original `CVS/Entries` revision and no `.#file.revision` siblings remain.
 
 ## Next steps
 
 1. Manual install smoke on **2026.2.1** (checklist above).
-2. Runtime fixes for SOCKS / chooser / confirmation if needed.
-3. Secondary target **2023.2.8** only after primary smoke.
+2. Complete the rollback release gate on **2023.2.8** and **2026.2.1**.
+3. Runtime fixes for SOCKS / chooser / confirmation if needed.
+4. Run Rust roadmap Phase 0 profiling only after the Java path is stable; do not add Cargo/native code before the go/no-go gate.

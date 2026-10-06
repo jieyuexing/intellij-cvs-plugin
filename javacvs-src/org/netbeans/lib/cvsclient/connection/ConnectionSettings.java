@@ -35,7 +35,18 @@ import java.net.Socket;
 import java.io.IOException;
 
 public interface ConnectionSettings {
+  int MAX_CONNECT_TIMEOUT_MILLIS = 10_000;
+
   int getConnectionTimeout();
+
+  /**
+   * Bounds only TCP connection establishment. The configured timeout still applies to socket reads,
+   * which can legitimately take longer during a CVS operation.
+   */
+  default int getConnectTimeout() {
+    final int configuredTimeout = getConnectionTimeout();
+    return configuredTimeout <= 0 ? MAX_CONNECT_TIMEOUT_MILLIS : Math.min(configuredTimeout, MAX_CONNECT_TIMEOUT_MILLIS);
+  }
 
   String getHostName();
 

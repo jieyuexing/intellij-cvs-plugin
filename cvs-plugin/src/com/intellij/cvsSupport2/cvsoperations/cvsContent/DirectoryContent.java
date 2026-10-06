@@ -57,9 +57,9 @@ public class DirectoryContent {
   }
 
   public void copyDataFrom(DirectoryContent directoryContent) {
-    mySubDirectories.addAll(directoryContent.getSubDirectories());
-    myFiles.addAll(directoryContent.getFiles());
-    myModules.addAll(directoryContent.getSubModules());
+    mySubDirectories.addAll(directoryContent.getSubDirectoriesRaw());
+    myFiles.addAll(directoryContent.getFilesRaw());
+    myModules.addAll(directoryContent.getSubModulesRaw());
   }
 
   public void clear() {

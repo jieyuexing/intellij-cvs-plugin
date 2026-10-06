@@ -46,6 +46,6 @@ public class SshProxyFactory {
 
   public static Socket createSocket(final ConnectionSettings connectionSettings) throws IOException {
       return SocketFactory.open(connectionSettings.getHostName(), connectionSettings.getPort(), createAndRegister(connectionSettings),
-                         connectionSettings.getConnectionTimeout());
+                         connectionSettings.getConnectTimeout());
   }
 }

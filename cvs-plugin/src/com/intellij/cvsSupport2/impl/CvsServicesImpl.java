@@ -31,6 +31,7 @@ import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDateImpl;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
 import com.intellij.cvsSupport2.history.ComparableVcsRevisionOnOperation;
+import com.intellij.cvsSupport2.util.VcsVirtualFileFactory;
 import com.intellij.openapi.cvsIntegration.CvsModule;
 import com.intellij.openapi.cvsIntegration.CvsRepository;
 import com.intellij.openapi.cvsIntegration.CvsResult;
@@ -123,7 +124,7 @@ public class CvsServicesImpl extends CvsServices {
     ComparableVcsRevisionOnOperation revision = new ComparableVcsRevisionOnOperation(operation,
                                                                                      project);
 
-    VcsVirtualFile vcsVirtualFile = new VcsVirtualFile(
+    VcsVirtualFile vcsVirtualFile = VcsVirtualFileFactory.create(
       VcsUtil.getFilePathOnNonLocal(cvsFile.getPathInCvs(), false),
       revision);
     OpenFileDescriptor openFileDescriptor = new OpenFileDescriptor(project, vcsVirtualFile);

@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -21,7 +22,8 @@ public class EditorAdapter {
   public void appendString(String message, TextAttributes attributes) {
     if (message == null) return;
     ApplicationManager.getApplication().invokeLater(() -> {
-      ApplicationManager.getApplication().runWriteAction(() -> {
+      if (myEditor.isDisposed()) return;
+      DocumentUtil.writeInRunUndoTransparentAction(() -> {
         Document document = myEditor.getDocument();
         document.insertString(document.getTextLength(), message.endsWith("\n") ? message : message + "\n");
         myEditor.getCaretModel().moveToOffset(document.getTextLength());

@@ -15,28 +15,34 @@
  */
 package com.intellij.cvsSupport2.checkinProject;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
-import com.intellij.cvsSupport2.actions.RestoreFileAction;
-import com.intellij.cvsSupport2.actions.cvsContext.CvsContextAdapter;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
-import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
+import com.intellij.cvsSupport2.cvsExecution.DefaultCvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
-import com.intellij.cvsSupport2.util.CvsVfsUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.rollback.DefaultRollbackEnvironment;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.admin.Entry;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -54,7 +60,9 @@ public class CvsRollbackEnvironment extends DefaultRollbackEnvironment {
   @Override
   public void rollbackChanges(List<? extends Change> changes, final List<VcsException> vcsExceptions, @NotNull final RollbackProgressListener listener) {
     listener.determinate();
+    final List<FilePath> repositoryRestores = new ArrayList<>();
     for (Change change : changes) {
+      listener.checkCanceled();
       final FilePath filePath = ChangesUtil.getFilePath(change);
       listener.accept(change);
       final VirtualFile parent = filePath.getVirtualFileParent();
@@ -62,56 +70,155 @@ public class CvsRollbackEnvironment extends DefaultRollbackEnvironment {
 
       switch (change.getType()) {
         case DELETED:
-          restoreFile(parent, name);
+          if (!restoreFileFromLocalBase(filePath, parent, name, vcsExceptions)) {
+            repositoryRestores.add(filePath);
+          }
           break;
 
         case MODIFICATION:
-          restoreFile(parent, name);
+          if (!restoreFileFromLocalBase(filePath, parent, name, vcsExceptions)) {
+            repositoryRestores.add(filePath);
+          }
           break;
 
         case MOVED:
-          CvsUtil.removeEntryFor(CvsVfsUtil.getFileFor(parent, name));
-          break;
-
         case NEW:
-          CvsUtil.removeEntryFor(CvsVfsUtil.getFileFor(parent, name));
+          removeEntry(filePath, vcsExceptions);
           break;
       }
     }
+    scheduleRepositoryRestore(repositoryRestores);
   }
 
   @Override
   public void rollbackMissingFileDeletion(List<? extends FilePath> filePaths, List<? super VcsException> exceptions, RollbackProgressListener listener) {
-    final CvsHandler cvsHandler = CommandCvsHandler.createCheckoutFileHandler(filePaths.toArray(new FilePath[0]),
-                                                                              CvsConfiguration.getInstance(myProject), null);
-    final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
-    executor.performActionSync(cvsHandler, CvsOperationExecutorCallback.EMPTY);
+    listener.determinate();
+    listener.accept(filePaths);
+    listener.checkCanceled();
+    final List<FilePath> repositoryRestores = new ArrayList<>();
+    for (FilePath filePath : filePaths) {
+      final VirtualFile parent = filePath.getVirtualFileParent();
+      if (parent == null) {
+        addRollbackError(filePath, CvsBundle.message("message.error.rollback.parent.unavailable"), null, exceptions);
+        continue;
+      }
+      final Entry entry = CvsEntriesManager.getInstance().getEntryFor(parent, filePath.getName());
+      if (entry == null || entry.getRevision() == null || entry.getRevision().isEmpty()) {
+        addRollbackError(filePath, CvsBundle.message("message.error.rollback.entry.missing"), null, exceptions);
+        continue;
+      }
+      repositoryRestores.add(filePath);
+    }
+    scheduleRepositoryRestore(repositoryRestores);
   }
 
-  private void restoreFile(final VirtualFile parent, String name) {
-    if (restoreFileFromCache(parent, name)) {
-      return;
+  /**
+   * @return {@code true} when the file was restored locally or cannot be restored; {@code false} when a
+   * repository-backed restore must be scheduled.
+   */
+  private boolean restoreFileFromLocalBase(@NotNull FilePath filePath,
+                                           VirtualFile parent,
+                                           @NotNull String name,
+                                           @NotNull List<? super VcsException> exceptions) {
+    if (parent == null) {
+      addRollbackError(filePath, CvsBundle.message("message.error.rollback.parent.unavailable"), null, exceptions);
+      return true;
     }
+
+    final Entry entry = CvsEntriesManager.getInstance().getEntryFor(parent, name);
+    if (entry == null || entry.getRevision() == null || entry.getRevision().isEmpty()) {
+      addRollbackError(filePath, CvsBundle.message("message.error.rollback.entry.missing"), null, exceptions);
+      return true;
+    }
+
     try {
-      new RestoreFileAction(parent, name).actionPerformed(new CvsContextAdapter() {
+      final boolean makeReadOnly = CvsConfiguration.getInstance(myProject).MAKE_NEW_FILES_READONLY;
+      if (CvsUtil.restoreFileFromCachedContentOrThrow(parent, name, entry.getRevision(), makeReadOnly)) {
+        return true;
+      }
+    }
+    catch (IOException e) {
+      addRollbackError(filePath, CvsBundle.message("message.error.rollback.cache.restore", e.getMessage()), e, exceptions);
+      return true;
+    }
+    return false;
+  }
+
+  private static void removeEntry(@NotNull FilePath filePath, @NotNull List<? super VcsException> exceptions) {
+    try {
+      CvsUtil.removeEntryForOrThrow(filePath.getIOFile());
+    }
+    catch (IOException | RuntimeException e) {
+      addRollbackError(filePath, CvsBundle.message("message.error.rollback.entry.remove", e.getMessage()), e, exceptions);
+    }
+  }
+
+  private void scheduleRepositoryRestore(@NotNull List<? extends FilePath> requestedFiles) {
+    final FilePath[] files = new LinkedHashSet<>(requestedFiles).toArray(new FilePath[0]);
+    if (files.length == 0) return;
+
+    // IDEA 232 executes the generic RollbackEnvironment inside an explicitly non-cancelable progress section.
+    // Queue repository I/O after that callback returns so it gets its own cancellable background indicator and
+    // cannot trap the user in the stock Rollback dialog.
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myProject.isDisposed()) return;
+
+      final CvsHandler handler = CommandCvsHandler.createRestoreFilesHandler(
+        files, CvsConfiguration.getInstance(myProject));
+      final CvsOperationExecutor executor = new CvsOperationExecutor(myProject, ModalityState.NON_MODAL);
+      executor.setIsQuietOperation(true);
+      executor.setShowErrors(false);
+      VcsBalloonProblemNotifier.showOverChangesView(
+        myProject, CvsBundle.message("message.rollback.remote.queued", files.length), MessageType.INFO);
+      executor.performActionSync(handler, new DefaultCvsOperationExecutorCallback() {
         @Override
-        public Project getProject() {
-          return myProject;
+        public void executionFinished(boolean successfully) {
+          refreshAfterRepositoryRestore(files);
+          if (myProject.isDisposed()) return;
+          if (executor.getResult().isCanceled()) {
+            VcsBalloonProblemNotifier.showOverChangesView(
+              myProject, CvsBundle.message("message.rollback.remote.canceled"), MessageType.WARNING);
+          }
+          else if (!handler.getErrorsExceptAborted().isEmpty()) {
+            for (VcsException error : handler.getErrorsExceptAborted()) {
+              LOG.warn(error);
+            }
+            VcsBalloonProblemNotifier.showOverChangesView(
+              myProject,
+              CvsBundle.message("message.rollback.remote.failed", handler.getErrorsExceptAborted().size()),
+              MessageType.ERROR);
+          }
+          else {
+            VcsBalloonProblemNotifier.showOverChangesView(
+              myProject, CvsBundle.message("message.rollback.remote.completed", files.length), MessageType.INFO);
+          }
         }
       });
+    }, ModalityState.NON_MODAL);
+  }
+
+  private void refreshAfterRepositoryRestore(@NotNull FilePath[] files) {
+    final VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
+    final LinkedHashSet<VirtualFile> parents = new LinkedHashSet<>();
+    for (FilePath file : files) {
+      final VirtualFile parent = file.getVirtualFileParent();
+      if (parent != null && parent.isValid()) {
+        parents.add(parent);
+      }
+      dirtyScopeManager.fileDirty(file);
     }
-    catch (Exception e) {
-      LOG.error(e);
+    for (VirtualFile parent : parents) {
+      parent.refresh(true, false);
     }
   }
 
-  private boolean restoreFileFromCache(VirtualFile parent, String name) {
-    final Entry entry = CvsEntriesManager.getInstance().getEntryFor(parent, name);
-    final String revision = entry.getRevision();
-    if (revision == null) {
-      return false;
-    }
-    final boolean makeReadOnly = CvsConfiguration.getInstance(myProject).MAKE_NEW_FILES_READONLY;
-    return CvsUtil.restoreFileFromCachedContent(parent, name, revision, makeReadOnly);
+  private static void addRollbackError(@NotNull FilePath filePath,
+                                       String detail,
+                                       Throwable cause,
+                                       @NotNull List<? super VcsException> exceptions) {
+    final String safeDetail = detail == null || detail.isBlank() ?
+                              CvsBundle.message("message.error.rollback.unknown") : detail;
+    final String message = CvsBundle.message("message.error.rollback.failed", filePath.getPath(), safeDetail);
+    exceptions.add(cause == null ? new VcsException(message) : new VcsException(message, cause));
   }
 }

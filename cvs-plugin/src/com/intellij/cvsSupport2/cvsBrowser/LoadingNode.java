@@ -24,8 +24,8 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
-import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -73,7 +73,7 @@ class LoadingNode extends DefaultMutableTreeNode {
   public static class Manager implements CvsTabbedWindow.DeactivateListener{
 
     private final Alarm myPeriodAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-    private final List<LoadingNode> loadingNodes = new ArrayList();
+    private final List<LoadingNode> loadingNodes = new ArrayList<>();
 
     public void addTo(final DefaultTreeModel model, MutableTreeNode parent) {
       final LoadingNode loadingNode = new LoadingNode(model);
@@ -83,10 +83,12 @@ class LoadingNode extends DefaultMutableTreeNode {
     }
 
     public void removeFrom(MutableTreeNode parent) {
-      for (LoadingNode loadingNode : loadingNodes) {
+      for (Iterator<LoadingNode> iterator = loadingNodes.iterator(); iterator.hasNext();) {
+        final LoadingNode loadingNode = iterator.next();
         if (loadingNode.getParent() == parent) {
           loadingNode.stop(myPeriodAlarm);
-          break;
+          iterator.remove();
+          return;
         }
       }
     }
@@ -94,6 +96,10 @@ class LoadingNode extends DefaultMutableTreeNode {
     @Override
     public void deactivated() {
       myPeriodAlarm.cancelAllRequests();
+      for (LoadingNode loadingNode : loadingNodes) {
+        loadingNode.stop(myPeriodAlarm);
+      }
+      loadingNodes.clear();
     }
   }
 
@@ -115,8 +121,13 @@ class LoadingNode extends DefaultMutableTreeNode {
   private void stop(Alarm periodAlarm) {
     stopped = true;
     periodAlarm.cancelRequest(myPeriodRequest);
-    final TreeNode parent = getParent();
-    removeFromParent();
-    myModel.reload(parent);
+    if (getParent() != null) {
+      if (getRoot() == myModel.getRoot()) {
+        myModel.removeNodeFromParent(this);
+      }
+      else {
+        removeFromParent();
+      }
+    }
   }
 }

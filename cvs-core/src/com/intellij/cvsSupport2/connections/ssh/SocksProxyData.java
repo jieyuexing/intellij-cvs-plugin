@@ -22,7 +22,7 @@ public class SocksProxyData implements SelfConnectionProxyData {
     final Proxy proxy = new Proxy(Proxy.Type.SOCKS, proxyAddr);
     final Socket socket = new Socket(proxy);
     final InetSocketAddress realAddress = new InetSocketAddress(mySettings.getHostName(), mySettings.getPort());
-    socket.connect(realAddress, mySettings.getConnectionTimeout());
+    socket.connect(realAddress, mySettings.getConnectTimeout());
     socket.setSoTimeout(0);
     return socket;
   }

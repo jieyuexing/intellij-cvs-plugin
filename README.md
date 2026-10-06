@@ -136,13 +136,16 @@ Early fork setup:
 - [x] `AGENTS.md` (preserve code / decouple / en+zh labels)
 - [x] Maintainer targets: IDEA **2026.2.1** (primary), **2023.2.8** (secondary)
 - [x] Chinese README (`README_ZH.md`)
-- [x] Standalone Gradle (Platform Plugin 2.18.1, Java 25, `since`/`until` = `262` / `262.*`)
+- [x] Standalone Gradle (Platform Plugin 2.18.1, Java 25, `since`/`until` = `232` / `262.*`)
 - [x] `compileJava` green on **2026.2.1**
-- [x] `buildPlugin` green (version **262.2**: since **232** … until **262.***, Java 17 classes, zh bundles)
+- [x] `buildPlugin` green (initial release version **262.0**: since **232** … until **262.***, Java 17 classes, zh bundles)
 - [x] `CvsBundle_zh` + sibling bundles; IDEA locale auto-switch via `DynamicBundle`
 - [x] Task mechanism: [docs/task-mechanism.md](docs/task-mechanism.md) + harness Task `task-intellij-cvs-i18n-zh-v1`
-- [ ] Install smoke on **2026.2.1** (reinstall 262.1 zip under Chinese UI)
-- [ ] Install smoke on **2023.2.8**
+- [x] Rust performance [roadmap](docs/rust-performance-roadmap.md) recorded as planning-only and benchmark-gated
+- [ ] Rust Phase 0 Java baseline/profiling and explicit go/no-go decision
+- [ ] Install smoke on **2026.2.1** (install the 262.0 release-candidate zip under Chinese UI)
+- [x] Install/root-discovery smoke on **2023.2.8**
+- [ ] Large-directory rollback smoke on **2023.2.8** and **2026.2.1**: verify batched exact-revision restore, visible Cancel, partial-cancel recovery, and no `.#file.revision` leftovers
 - [ ] Optional Marketplace (community) publish
 
 ## Build (2026.2.1)
@@ -151,18 +154,59 @@ Early fork setup:
 # Use JBR 25 from IDEA 2026.2.1
 export JAVA_HOME="$HOME/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Home"
 python3 scripts/check_i18n_keys.py
+python3 scripts/check_rust_roadmap.py
 ./gradlew buildPlugin
-# artifact: build/distributions/intellij-cvs-plugin-262.2.zip
+# artifact: build/distributions/intellij-cvs-plugin-262.0.zip
 ```
 
 **Versioning:** major tracks IDEA **2026.2** train (`262.x`).  
 **Install range:** `since-build=232` … `until-build=262.*` (IDEA **2023.2** through **2026.2**).  
-**262.2:** widen range for IU-232 + emit Java 17 class files (avoids “needs 262” / class-version rejection on 2023.2.8).
+**262.0 is the initial community release.** All changes below were developed before that first public release:
+
+- Widen the range for IU-232 and emit Java 17 class files (avoids “needs 262” / class-version rejection on 2023.2.8).
+
+- Optimize repository/status scans and error handling; Rust remains a planning-only, optional future fast path.
+
+- Fix IDEA 232 status refresh when one CVS mapping is a container for multiple nested working copies; container paths are no longer shown as a single unversioned directory.
+
+- Discover CVS roots from disk when IDEA 232 has not yet populated ignored `CVS` admin directories in the VFS; initial status no longer requires “Reload from Disk”.
+
+- Add an explicit offline content baseline for copied or extracted CVS working copies whose timestamps were rewritten. It avoids per-file repository access without silently treating a heuristic as authoritative.
+
+- Make cached rollback a no-op when the working file already has identical bytes and surface cache/`CVS/Entries`/permission failures through IDEA's rollback error list. When local base content is unavailable, leave IDEA 232's non-cancelable generic rollback section immediately, then restore files in a plugin-owned cancellable background task. Files are grouped by exact `CVS/Entries` revision and restored with batched clean updates instead of a checkout connection loop per file. Cancel also runs partial-result cleanup; original Entries are reconciled once per directory, and VFS parent refreshes are deduplicated.
+
+- Separate mapped-container discovery from CVS status ownership. A cancellable startup task discovers working-copy roots directly from disk, refreshes only those VFS paths, and triggers the first Changes scan; paths outside confirmed roots are no longer reported as unversioned.
+
+- Accept an explicitly dirty working-copy root as part of its own IDEA 232 dirty scope. This closes the cold-start gap where all discovered roots were skipped until a descendant was refreshed manually.
+
+- Treat an explicitly recursive dirty root as authorization for its complete subtree. IDEA 232 does not reliably report scope membership for descendants of roots produced by the custom converter; re-checking each child previously stopped initial status collection at the first directory level.
+
+- Dirty the original configured mapping container after discovery, then route that recursive scope to the discovered CVS roots. This keeps IDEA 232's provider and `ChangelistBuilder` on the same scope anchor; previously the provider found deep changes but the platform silently discarded them before updating the Changes view.
+
+- Add an explicit, cancellable, read-only repository verification for timestamp-only status candidates. A candidate is cached as clean only when a complete `cvs -n update` leaves it silent and its working bytes plus `CVS/Entries` remain stable; login, network, cancellation, warning, or concurrent-file failures leave the previous baseline untouched.
+
+- Collapse overlapping recursive dirty paths (configured container, converted CVS root, and explicit descendants) before scanning. Each CVS subtree and explicit file is submitted to the Changes model at most once per refresh.
+
+- Index every server-reported path once, then check candidate ancestors through a hash set. Repository-verification result matching is bounded by path depth instead of candidates multiplied by reported paths.
+
+### Many changes whose contents are identical
+
+CVS normally records a revision and checkout timestamp in `CVS/Entries`; unlike Git, it does not always retain a complete local comparison index. If copying a working copy rewrites file timestamps, CVS must conservatively report unchanged contents as modified.
+
+The safe default is **VCS → CVS → Verify Local Contents with CVS Repository...**. It uses the configured IDEA CVS login to run a read-only dry-run update, then stores SHA-256 only for timestamp-mismatched files which the server does not report and which remain stable during verification. Working files, `CVS/Entries`, and the repository are not modified. Login/network errors, warnings, cancellation, or concurrent changes do not update the cache.
+
+The older **Trust Current Contents and Build Local Baseline...** action remains an explicit offline escape hatch, but it also accepts pre-existing local edits when `BaseRevisions` is unavailable. Files that differ from an available `CVS/BaseRevisions` copy always remain changed. Use **Clear Local Content Baseline...** to restore conservative CVS status.
+
+### IDEA 2023.2 on macOS: native crash while rolling back
+
+IDEA 2023.2.8 ships JBR 17.0.12. A large expanded Changes tree can trigger JetBrains Runtime issue [JBR-7659](https://youtrack.jetbrains.com/issue/JBR-7659): the macOS accessibility bridge recursively posts tree-expanded events and macOS terminates the IDE with `Too many nested CFRunLoopRuns`. This is a native runtime failure, not a Java exception from the CVS plugin. The initial release removes avoidable file writes and nested CVS UI work; repository-backed rollback is moved to its own cancellable background task, but the plugin cannot replace the IDE runtime.
+
+If VoiceOver/IDE accessibility is not required, JetBrains' workaround is to add `-Dsun.awt.mac.a11y.enabled=false` in **Help → Edit Custom VM Options**, then restart IDEA. Do not use that workaround when VoiceOver is required; it disables the IDE accessibility bridge and can also affect window-management tools that depend on it. In that case, use a newer IDE/JBR containing the runtime fix, and collapse the large Changes tree before a one-time baseline refresh.
 
 **i18n:** English baseline + `*_zh.properties`. With IDEA UI language = Chinese, labels switch automatically (no manual toggle).
 
 Install: Settings → Plugins → ⚙️ → Install Plugin from Disk… → pick the zip → restart.  
-Details: [docs/platform-2026.2-notes.md](docs/platform-2026.2-notes.md) · Tasks: [docs/task-mechanism.md](docs/task-mechanism.md).
+Details: [platform notes](docs/platform-2026.2-notes.md) · [Rust roadmap](docs/rust-performance-roadmap.md) · [tasks](docs/task-mechanism.md).
 
 ## Layout
 
@@ -175,6 +219,7 @@ Details: [docs/platform-2026.2-notes.md](docs/platform-2026.2-notes.md) · Tasks
 | `trilead-ssh2-build213/` | Bundled SSH library sources |
 | `lib/` | Prebuilt jars (e.g. trilead) |
 | `testSource/` | Tests |
+| `docs/` | Platform notes, task boundaries, and future performance roadmap |
 
 ## License
 

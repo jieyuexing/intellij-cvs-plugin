@@ -47,6 +47,8 @@ import java.util.List;
 import java.util.*;
 
 public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListener, ChildrenLoader<CvsElement> {
+  private static final int DIRECTORY_CONTENT_BATCH_DELAY_MILLIS = 100;
+
   private CvsElement[] myCurrentSelection = CvsElement.EMPTY_ARRAY;
   private Tree myTree;
   private DefaultTreeModel myModel;
@@ -114,7 +116,7 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
     }
     final String rootName = myCvsRootConfiguration.toString();
     final CvsElement result = CvsElementFactory.FOLDER_ELEMENT_FACTORY.createElement(rootName, myCvsRootConfiguration, project);
-    result.setDataProvider(new RootDataProvider(myCvsRootConfiguration));
+    result.setDataProvider(new RootDataProvider(myCvsRootConfiguration, myShowModules));
     result.setPath(".");
     result.cannotBeCheckedOut();
     result.setChildrenLoader(this);
@@ -194,10 +196,11 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
     element.setLoading(true);
     myLoadingNodeManager.addTo(myModel, element);
     final Application application = ApplicationManager.getApplication();
-    final ModalityState modalityState = application.getCurrentModalityState();
+    final ModalityState modalityState = ModalityState.current();
+    final CvsRootConfiguration rootConfiguration = myCvsRootConfiguration;
     application.executeOnPooledThread(() -> {
       final RemoteResourceDataProvider dataProvider = element.getDataProvider();
-      dataProvider.fillContentFor(new MyGetContentCallback(element, modalityState, myProject), myErrorCallback);
+      dataProvider.fillContentFor(new MyGetContentCallback(element, modalityState, myProject, rootConfiguration), myErrorCallback);
     });
   }
 
@@ -206,17 +209,28 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
     private final CvsElement myParentNode;
     private final ModalityState myModalityState;
     private final Project myProject;
-    private CvsListenerWithProgress myListener;
-    private long timeStamp = 0L;
-    private int waitTime = 100;
+    private final CvsRootConfiguration myRootConfiguration;
+    private final Object myPendingContentLock = new Object();
+    // Keep chunks separate: on macOS equal names across node types are resolved by arrival order.
+    private List<DirectoryContent> myPendingContents = new ArrayList<>();
+    private volatile CvsListenerWithProgress myListener;
+    private javax.swing.Timer myUiUpdateTimer;
+    private boolean myUiUpdateScheduled;
+    private boolean myFinished;
+    private volatile boolean myDeactivated;
     private TreePath mySelectionPath;
 
-    MyGetContentCallback(CvsElement parentNode, ModalityState modalityState, Project project) {
+    MyGetContentCallback(CvsElement parentNode, ModalityState modalityState, Project project,
+                         CvsRootConfiguration rootConfiguration) {
       myParentNode = parentNode;
       myModalityState = modalityState;
       myProject = project;
+      myRootConfiguration = rootConfiguration;
       addListener(this);
       ApplicationManager.getApplication().invokeLater(() -> {
+        if (myDeactivated || !isCurrentParent()) {
+          return;
+        }
         mySelectionPath = myTree.getSelectionPath();
         if (mySelectionPath == null) {
           selectRoot();
@@ -242,64 +256,157 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
 
     @Override
     public void deactivated() {
-      if (myListener != null) {
-        myListener.indirectCancel();
+      final CvsListenerWithProgress listener;
+      synchronized (myPendingContentLock) {
+        myDeactivated = true;
+        myPendingContents.clear();
+        listener = myListener;
+      }
+      if (listener != null) {
+        listener.indirectCancel();
       }
     }
 
     @Override
     public void useForCancel(final CvsListenerWithProgress listener) {
-      myListener = listener;
+      final boolean cancelImmediately;
+      synchronized (myPendingContentLock) {
+        myListener = listener;
+        cancelImmediately = myDeactivated;
+      }
+      if (cancelImmediately) {
+        listener.indirectCancel();
+      }
     }
 
     @Override
     public void appendDirectoryContent(final DirectoryContent directoryContent) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        final TreePath selectionPath = myTree.getSelectionPath();
-        if (selectionPath != null) {
-          mySelectionPath = selectionPath;
+      final boolean scheduleUiUpdate;
+      synchronized (myPendingContentLock) {
+        if (myFinished || myDeactivated) {
+          return;
         }
-        if (myShowModules) {
-          process(directoryContent.getSubModulesRaw(), CvsElementFactory.MODULE_ELEMENT_FACTORY,
-                  new ModuleDataProvider(myCvsRootConfiguration));
-        }
-        process(directoryContent.getSubDirectoriesRaw(), CvsElementFactory.FOLDER_ELEMENT_FACTORY,
-                myParentNode.getDataProvider().getChildrenDataProvider());
-        if (myShowFiles) {
-          process(directoryContent.getFilesRaw(), CvsElementFactory.FILE_ELEMENT_FACTORY, RemoteResourceDataProvider.NOT_EXPANDABLE);
-        }
-        if (myTree.getSelectionPath() == null) {
-          myTree.setSelectionPath(mySelectionPath);
-        }
-        final long currentTime = System.currentTimeMillis();
-        if (currentTime - timeStamp > waitTime) {
-          waitTime += 100; // ease off
-          myModel.reload(myParentNode);
-          timeStamp = System.currentTimeMillis();
-        }
-      }, myModalityState);
+        final DirectoryContent snapshot = new DirectoryContent();
+        snapshot.copyDataFrom(directoryContent);
+        myPendingContents.add(snapshot);
+        scheduleUiUpdate = !myUiUpdateScheduled;
+        myUiUpdateScheduled = true;
+      }
+      if (scheduleUiUpdate) {
+        ApplicationManager.getApplication().invokeLater(this::startUiUpdateTimer, myModalityState);
+      }
     }
 
-    protected void process(Collection<String> children, CvsElementFactory elementFactory, RemoteResourceDataProvider dataProvider) {
+    private void startUiUpdateTimer() {
+      synchronized (myPendingContentLock) {
+        if (myFinished || myDeactivated) {
+          myUiUpdateScheduled = false;
+          return;
+        }
+        if (myUiUpdateTimer != null) {
+          return;
+        }
+        // Use a fixed window instead of debounce so a continuous response still paints promptly.
+        myUiUpdateTimer = new javax.swing.Timer(DIRECTORY_CONTENT_BATCH_DELAY_MILLIS, event ->
+          ApplicationManager.getApplication().invokeLater(this::flushPendingContent, myModalityState));
+        myUiUpdateTimer.setRepeats(false);
+        myUiUpdateTimer.start();
+      }
+    }
+
+    private void flushPendingContent() {
+      final List<DirectoryContent> directoryContents;
+      synchronized (myPendingContentLock) {
+        if (myUiUpdateTimer != null) {
+          myUiUpdateTimer.stop();
+          myUiUpdateTimer = null;
+        }
+        myUiUpdateScheduled = false;
+        if (myDeactivated) {
+          myPendingContents.clear();
+          return;
+        }
+        directoryContents = myPendingContents;
+        myPendingContents = new ArrayList<>();
+      }
+      applyDirectoryContents(directoryContents);
+    }
+
+    private void applyDirectoryContents(Collection<DirectoryContent> directoryContents) {
+      if (directoryContents.isEmpty() || !isCurrentParent()) {
+        return;
+      }
+      final TreePath selectionPath = myTree.getSelectionPath();
+      if (selectionPath != null) {
+        mySelectionPath = selectionPath;
+      }
+
+      final List<CvsElement> elements = new ArrayList<>();
+      for (DirectoryContent directoryContent : directoryContents) {
+        if (myShowModules) {
+          createElements(directoryContent.getSubModulesRaw(), CvsElementFactory.MODULE_ELEMENT_FACTORY,
+                         new ModuleDataProvider(myRootConfiguration), elements);
+        }
+        createElements(directoryContent.getSubDirectoriesRaw(), CvsElementFactory.FOLDER_ELEMENT_FACTORY,
+                       myParentNode.getDataProvider().getChildrenDataProvider(), elements);
+        if (myShowFiles) {
+          createElements(directoryContent.getFilesRaw(), CvsElementFactory.FILE_ELEMENT_FACTORY,
+                         RemoteResourceDataProvider.NOT_EXPANDABLE, elements);
+        }
+      }
+      elements.sort(TreeNodeComparator.INSTANCE);
+
+      final int[] insertedIndices = new int[elements.size()];
+      int insertedCount = 0;
+      for (CvsElement element : elements) {
+        final int index = myParentNode.insertSortedAndGetIndex(element, TreeNodeComparator.INSTANCE);
+        if (index >= 0) {
+          insertedIndices[insertedCount++] = index;
+        }
+      }
+      if (insertedCount > 0) {
+        myModel.nodesWereInserted(myParentNode, Arrays.copyOf(insertedIndices, insertedCount));
+      }
+      if (myTree.getSelectionPath() == null && mySelectionPath != null) {
+        myTree.setSelectionPath(mySelectionPath);
+      }
+    }
+
+    private boolean isCurrentParent() {
+      return myParentNode.getRoot() == myModel.getRoot();
+    }
+
+    private void createElements(Collection<String> children, CvsElementFactory elementFactory,
+                                RemoteResourceDataProvider dataProvider, Collection<? super CvsElement> result) {
       for (final String name : children) {
-        final CvsElement element = elementFactory.createElement(name, myCvsRootConfiguration, myProject);
+        final CvsElement element = elementFactory.createElement(name, myRootConfiguration, myProject);
         element.setDataProvider(dataProvider);
         element.setPath(myParentNode.createPathForChild(name));
         element.setChildrenLoader(CvsTree.this);
-        myParentNode.insertSorted(element, TreeNodeComparator.INSTANCE);
+        result.add(element);
       }
     }
 
     @Override
     public void finished() {
-      removeListener(this);
+      synchronized (myPendingContentLock) {
+        if (myFinished) {
+          return;
+        }
+        myFinished = true;
+      }
       ApplicationManager.getApplication().invokeLater(() -> {
+        removeListener(this);
+        // Always drain before removing the loading node; short operations may finish before the timer fires.
+        flushPendingContent();
         myLoadingNodeManager.removeFrom(myParentNode);
         myParentNode.setLoading(false);
-        if (mySelectionPath != null) {
+        if (!myDeactivated && isCurrentParent() && mySelectionPath != null) {
           if (mySelectionPath.getLastPathComponent() instanceof LoadingNode) {
-            final TreeNode firstChild = myParentNode.getFirstChild();
-            myTree.setSelectionPath(mySelectionPath.getParentPath().pathByAddingChild(firstChild));
+            if (myParentNode.getChildCount() > 0) {
+              final TreeNode firstChild = myParentNode.getFirstChild();
+              myTree.setSelectionPath(mySelectionPath.getParentPath().pathByAddingChild(firstChild));
+            }
           }
           else if (myTree.getSelectionPath() == null) {
             myTree.setSelectionPath(mySelectionPath);

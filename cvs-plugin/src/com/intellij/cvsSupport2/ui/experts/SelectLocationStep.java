@@ -141,6 +141,7 @@ public abstract class SelectLocationStep extends WizardStep {
   @Override
   protected JComponent createComponent() {
     final JPanel panel = new MyPanel();
+    myFileSystemToolBar.setTargetComponent(panel);
     final JPanel toolbarPanel = new JPanel(new GridBagLayout());
     final GridBagConstraints constraints = new GridBagConstraints();
     constraints.gridx = 0;
@@ -179,9 +180,14 @@ public abstract class SelectLocationStep extends WizardStep {
   }
 
   private DefaultActionGroup createFileSystemActionGroup() {
-    // FileSystemTreeFactory removed in 2026.x; keep custom actions only.
     final DefaultActionGroup group = new DefaultActionGroup();
+    final AnAction fileChooserToolbar = ActionManager.getInstance().getAction("FileChooserToolbar");
+    if (fileChooserToolbar instanceof ActionGroup) {
+      group.addAll((ActionGroup)fileChooserToolbar);
+    }
+
     final AnAction[] actions = getActions();
+    if (actions.length > 0 && group.getChildrenCount() > 0) group.addSeparator();
     for (AnAction action : actions) {
       group.add(action);
     }
@@ -309,7 +315,7 @@ public abstract class SelectLocationStep extends WizardStep {
     @Override
     protected void onSetActive(final boolean active) {
       final String tooltip = KeymapUtil.createTooltipText(ActionsBundle.message("action.FileChooser.TogglePathShowing.text"),
-                                                          ActionManager.getInstance().getAction("FileChooser.TogglePathShowing"));
+                                                          "FileChooser.TogglePathBar");
       setToolTipText(tooltip);
     }
 

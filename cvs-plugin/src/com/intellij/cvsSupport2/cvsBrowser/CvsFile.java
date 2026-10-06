@@ -18,10 +18,10 @@ package com.intellij.cvsSupport2.cvsBrowser;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetFileContentOperation;
 import com.intellij.cvsSupport2.history.ComparableVcsRevisionOnOperation;
+import com.intellij.cvsSupport2.util.VcsVirtualFileFactory;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
@@ -56,7 +56,7 @@ public class CvsFile extends CvsElement {
   }
 
   private VirtualFile createVirtualFile() {
-    return new VcsVirtualFile(
+    return VcsVirtualFileFactory.create(
       com.intellij.vcsUtil.VcsUtil.getFilePathOnNonLocal(myPath, false),
       new ComparableVcsRevisionOnOperation(
         new GetFileContentOperation(getCvsLightFile(), myEnvironment, myEnvironment.getRevisionOrDate()),

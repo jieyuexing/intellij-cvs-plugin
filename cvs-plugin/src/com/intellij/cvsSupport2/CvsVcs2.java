@@ -17,7 +17,7 @@ import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsOperation;
-import com.intellij.cvsSupport2.cvsoperations.common.FindAllRootsHelper;
+import com.intellij.cvsSupport2.cvsoperations.common.CvsRootDiscovery;
 import com.intellij.cvsSupport2.cvsoperations.cvsEdit.ui.EditOptionsDialog;
 import com.intellij.cvsSupport2.cvsstatuses.CvsChangeProvider;
 import com.intellij.cvsSupport2.cvsstatuses.CvsEntriesListener;
@@ -77,6 +77,7 @@ public final class CvsVcs2 extends AbstractVcs implements TransactionProvider, E
   private final VcsShowConfirmationOption myAddConfirmation;
   private final VcsShowConfirmationOption myRemoveConfirmation;
   private final CvsEntriesListener myCvsEntriesListener;
+  private final CvsRootDiscovery myRootDiscovery;
 
   private ChangeProvider myChangeProvider;
   private MergeProvider myMergeProvider;
@@ -94,6 +95,7 @@ public final class CvsVcs2 extends AbstractVcs implements TransactionProvider, E
     myCvsAnnotationProvider = new CvsAnnotationProvider(myProject, myCvsHistoryProvider);
     myDiffProvider = new CvsDiffProvider(myProject);
     myCommittedChangesProvider = new CvsCommittedChangesProvider(myProject);
+    myRootDiscovery = new CvsRootDiscovery(project, this);
 
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     myAddOptions = vcsManager.getStandardOption(VcsConfiguration.StandardOption.ADD, this);
@@ -240,10 +242,12 @@ public final class CvsVcs2 extends AbstractVcs implements TransactionProvider, E
   protected void activate() {
     CvsStorageSupportingDeletionComponent.getInstance(myProject).activate();
     CvsEntriesManager.getInstance().addCvsEntriesListener(myCvsEntriesListener);
+    myRootDiscovery.activate();
   }
 
   @Override
   protected void deactivate() {
+    myRootDiscovery.deactivate();
     CvsStorageSupportingDeletionComponent.getInstance(myProject).deactivate();
     CvsEntriesManager.getInstance().removeCvsEntriesListener(myCvsEntriesListener);
   }
@@ -362,7 +366,7 @@ public final class CvsVcs2 extends AbstractVcs implements TransactionProvider, E
       @Override
       @NotNull
       public List<VirtualFile> convertRoots(@NotNull List<VirtualFile> result) {
-        return FindAllRootsHelper.findVersionedUnder(result);
+        return myRootDiscovery.convertRoots(result);
       }
     };
   }
@@ -390,4 +394,3 @@ public final class CvsVcs2 extends AbstractVcs implements TransactionProvider, E
     return in;
   }
 }
-
