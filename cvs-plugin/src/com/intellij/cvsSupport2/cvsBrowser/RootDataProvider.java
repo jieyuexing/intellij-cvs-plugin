@@ -20,40 +20,55 @@ import com.intellij.cvsSupport2.cvsoperations.common.CompositeOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.*;
 import com.intellij.util.Consumer;
 
-class RootDirectoryContentProvider extends CompositeOperation implements DirectoryContentProvider{
+class RootDirectoryContentProvider extends CompositeOperation implements DirectoryContentProvider {
   private final GetDirectoriesListViaUpdateOperation myDirectoryListOperation;
   private final GetModulesListOperation myModuleListOperation;
 
-  RootDirectoryContentProvider(CvsEnvironment env){
+  RootDirectoryContentProvider(CvsEnvironment env, boolean showModules) {
     myDirectoryListOperation = new GetDirectoriesListViaUpdateOperation(env, ".");
-    myModuleListOperation = new GetModulesListOperation(env);
-
     addOperation(myDirectoryListOperation);
-    addOperation(myModuleListOperation);
+
+    if (showModules) {
+      myModuleListOperation = new GetModulesListOperation(env);
+      addOperation(myModuleListOperation);
+    }
+    else {
+      myModuleListOperation = null;
+    }
   }
 
   @Override
   public DirectoryContent getDirectoryContent() {
     final DirectoryContent result = new DirectoryContent();
     result.copyDataFrom(myDirectoryListOperation.getDirectoryContent());
-    result.copyDataFrom(myModuleListOperation.getDirectoryContent());
+    if (myModuleListOperation != null) {
+      result.copyDataFrom(myModuleListOperation.getDirectoryContent());
+    }
     return result;
   }
 
   @Override
   public void setStreamingListener(Consumer<DirectoryContent> streamingListener) {
     myDirectoryListOperation.setStreamingListener(streamingListener);
-    myModuleListOperation.setStreamingListener(streamingListener);
+    if (myModuleListOperation != null) {
+      myModuleListOperation.setStreamingListener(streamingListener);
+    }
   }
 }
-public class RootDataProvider extends AbstractVcsDataProvider{
+public class RootDataProvider extends AbstractVcsDataProvider {
+  private final boolean myShowModules;
 
   public static RootDataProvider createTestInstance(CvsEnvironment environment){
     return new RootDataProvider(environment);
   }
 
   public RootDataProvider(CvsEnvironment environment) {
+    this(environment, true);
+  }
+
+  public RootDataProvider(CvsEnvironment environment, boolean showModules) {
     super(environment);
+    myShowModules = showModules;
   }
 
   @Override
@@ -63,6 +78,6 @@ public class RootDataProvider extends AbstractVcsDataProvider{
 
   @Override
   public DirectoryContentProvider createDirectoryContentProvider(String path) {
-    return new RootDirectoryContentProvider(myEnvironment);
+    return new RootDirectoryContentProvider(myEnvironment, myShowModules);
   }
 }

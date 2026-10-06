@@ -107,15 +107,23 @@ public class CvsElement extends DefaultMutableTreeNode implements Comparable<Cvs
   }
 
   public void insertSorted(MutableTreeNode newChild, Comparator comparator) {
+    insertSortedAndGetIndex(newChild, comparator);
+  }
+
+  int insertSortedAndGetIndex(MutableTreeNode newChild, Comparator comparator) {
     final int insertionPoint;
     if (children == null) {
       insert(newChild, 0);
+      return 0;
     } else {
       insertionPoint = Collections.binarySearch(children, newChild, comparator);
       if (insertionPoint < 0) {
-        insert(newChild, -insertionPoint - 1);
+        final int index = -insertionPoint - 1;
+        insert(newChild, index);
+        return index;
       }
     }
+    return -1;
   }
 
   public String toString() {

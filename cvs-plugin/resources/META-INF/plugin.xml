@@ -53,6 +53,7 @@
     <projectService serviceImplementation="com.intellij.cvsSupport2.ui.CvsTabbedWindow"/>
     <projectService serviceImplementation="com.intellij.cvsSupport2.config.CvsConfiguration"/>
     <projectService serviceImplementation="com.intellij.cvsSupport2.application.CvsStorageSupportingDeletionComponent"/>
+    <projectService serviceImplementation="com.intellij.cvsSupport2.cvsstatuses.CvsLocalContentBaseline"/>
 
     <vcsCheckinHandlerFactory implementation="com.intellij.cvsSupport2.CvsCheckinHandlerFactory"/>
 
@@ -76,6 +77,10 @@
       <action id="GlobalSettings" class="com.intellij.cvsSupport2.actions.GlobalSettingsAction"/>
       <action id="ConfigureCvsRoots" class="com.intellij.cvsSupport2.actions.ConfigureCvsRootsAction"/>
       <action id="MigrateCvsRoot" class="com.intellij.cvsSupport2.actions.MigrateCvsRootAction"/>
+      <separator/>
+      <action id="Cvs.VerifyLocalContentWithRepository" class="com.intellij.cvsSupport2.actions.VerifyLocalContentWithRepositoryAction"/>
+      <action id="Cvs.CreateLocalContentBaseline" class="com.intellij.cvsSupport2.actions.CreateLocalContentBaselineAction"/>
+      <action id="Cvs.ClearLocalContentBaseline" class="com.intellij.cvsSupport2.actions.ClearLocalContentBaselineAction"/>
       <separator/>
     </group>
 

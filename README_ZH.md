@@ -136,14 +136,17 @@ JetBrains 已弃用 CVS 支持，把代码迁到 `intellij-obsolete-plugins`，�
 - [x] `AGENTS.md`（保原码 / 解耦 / en+zh 文案）  
 - [x] 维护者目标：IDEA **2026.2.1**（主）、**2023.2.8**（次）  
 - [x] 中文 README（本文件）  
-- [x] 独立 Gradle（Platform Plugin 2.18.1、Java 25、`since`/`until` = `262` / `262.*`）  
+- [x] 独立 Gradle（Platform Plugin 2.18.1、Java 25、`since`/`until` = `232` / `262.*`）
 - [x] **2026.2.1** 上 `compileJava` 变绿  
-- [x] `buildPlugin` 变绿（版本 **262.2**：since **232** … until **262.***，Java 17，含中文 Bundle）  
-- [x] `CvsBundle_zh` 及兄弟 bundle；随 IDEA 界面语言自动切换（`DynamicBundle`）  
-- [x] Task 机制：[docs/task-mechanism.md](docs/task-mechanism.md) + harness Task `task-intellij-cvs-i18n-zh-v1`  
-- [ ] **2026.2.1** 安装冒烟（中文 UI 下重装 262.1 zip）  
-- [ ] **2023.2.8** 安装冒烟  
-- [ ] 可选：社区 Marketplace 发布  
+- [x] `buildPlugin` 变绿（初版发布版本 **262.0**：since **232** … until **262.***，Java 17，含中文 Bundle）
+- [x] `CvsBundle_zh` 及兄弟 bundle；随 IDEA 界面语言自动切换（`DynamicBundle`）
+- [x] Task 机制：[docs/task-mechanism.md](docs/task-mechanism.md) + harness Task `task-intellij-cvs-i18n-zh-v1`
+- [x] Rust 性能[路线图](docs/rust-performance-roadmap.md)已落盘，当前仅规划且受基准门约束
+- [ ] Rust Phase 0 Java 基线/profiling 与显式 go/no-go 决策
+- [ ] **2026.2.1** 安装冒烟（中文 UI 下安装 262.0 Release Candidate zip）
+- [x] **2023.2.8** 安装/根发现冒烟
+- [ ] 在 **2023.2.8** 与 **2026.2.1** 做大目录回滚冒烟：验证按精确修订批量恢复、Cancel 可见、部分取消后可恢复，且不残留 `.#文件.修订号`
+- [ ] 可选：社区 Marketplace 发布
 
 ## 构建（2026.2.1）
 
@@ -151,18 +154,59 @@ JetBrains 已弃用 CVS 支持，把代码迁到 `intellij-obsolete-plugins`，�
 # 使用 IDEA 2026.2.1 自带的 JBR 25
 export JAVA_HOME="$HOME/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Home"
 python3 scripts/check_i18n_keys.py
+python3 scripts/check_rust_roadmap.py
 ./gradlew buildPlugin
-# 产物: build/distributions/intellij-cvs-plugin-262.2.zip
+# 产物: build/distributions/intellij-cvs-plugin-262.0.zip
 ```
 
 **版本约定：** 主号对齐 IDEA **2026.2** 平台线（`262.x`）。  
 **安装范围：** `since-build=232` … `until-build=262.*`（IDEA **2023.2**～**2026.2**）。  
-**262.2：** 兼容 IU-232 安装，并输出 Java 17 字节码（避免 2023.2.8 报「需要 262」或类版本过高）。
+**262.0 是社区版初次发布。** 下列改进均在首个公开版发布前完成：
+
+- 兼容 IU-232 安装，并输出 Java 17 字节码（避免 2023.2.8 报「需要 262」或类版本过高）。
+
+- 优化仓库/状态扫描与错误处理；Rust 仍只是规划中的可选未来 fast path。
+
+- 修复 IDEA 232 中“一个 CVS 映射目录包含多个嵌套工作副本”时的状态刷新；容器路径不再被整体误报为未版本管理目录。
+
+- 当 IDEA 232 尚未把被忽略的 `CVS` 管理目录装入 VFS 时，改由磁盘发现 CVS 根；初始状态不再依赖“从磁盘重新加载”。
+
+- 为复制/解压后时间戳失效的 CVS 工作副本增加显式的离线内容基线。它避免逐文件连接仓库，也不会把启发式判断偷偷当作事实。
+
+- 工作文件与缓存内容相同时，回滚不再重复写盘；缓存、`CVS/Entries` 与权限错误统一交给 IDEA 回滚错误列表。缺少本地基线时，立即离开 IDEA 232 不可取消的通用回滚区间，再由插件自己的可取消后台任务恢复；文件按 `CVS/Entries` 中的精确修订分组，以批量 clean update 取代逐文件 checkout 连接循环。取消时也会执行部分结果收尾，原始 Entries 按目录一次性校正，VFS 父目录刷新会去重。
+
+- 分离“映射容器用于发现”与“CVS 根拥有状态”两种职责。启动后以可取消后台任务直接从磁盘发现工作副本，只定点刷新这些根并触发首次 Changes 扫描；确认根之外的路径不再显示为未版本管理。
+
+- 在 IDEA 232 中把显式标脏的工作副本根目录视为其自身脏范围的一部分，修复冷启动发现全部根后仍被逐个判定为越界、必须刷新某个子目录才加载列表的问题。
+
+- 把显式递归标脏的根视为对整棵子树的授权。IDEA 232 对自定义根转换器生成的根及其后代不能稳定返回 scope 归属；逐层重复判断会让首次状态收集停在第一层目录。
+
+- 根发现完成后递归标脏原始配置映射容器，再由 ChangeProvider 把该 scope 路由到发现的 CVS 根。这样 IDEA 232 的 Provider 与 `ChangelistBuilder` 使用同一个 scope 锚点；此前 Provider 已找到深层更改，但平台会在刷新“更改”视图前静默丢弃。
+
+- 为仅由时间戳导致的含糊状态增加显式、可取消、只读的仓库验证。只有完整 `cvs -n update` 未报告、且工作文件与 `CVS/Entries` 在验证期间保持稳定的候选文件才会缓存为内容相同；登录、网络、取消、警告或并发文件变化都会保留原有基线。
+
+- 在扫描前折叠重叠的递归 dirty 路径（配置映射容器、转换后的 CVS 根及显式后代）。每次刷新中，每个 CVS 子树和显式文件最多向 Changes 模型提交一次。
+
+- 先把服务器报告路径建立为哈希集合，再沿候选文件的父路径回溯匹配。仓库验证结果匹配由“候选数乘报告数”降为“候选数乘路径深度”。
+
+### 大量“内容相同”的更改
+
+CVS 通常只在 `CVS/Entries` 中保存修订号和检出时间，并不像 Git 那样始终保留可供本地比较的完整索引。复制工作副本如果重写了文件时间戳，CVS 就会把内容未变的文件也保守地视为修改。
+
+安全的默认操作是：**VCS → CVS → 使用 CVS 仓库验证本地内容...**。插件使用 IDEA 已配置的 CVS 登录执行只读模拟更新，只为服务器未报告且验证期间保持稳定的时间戳候选文件保存 SHA-256。工作文件、`CVS/Entries` 与仓库都不会被修改；登录/网络错误、警告、取消或并发变化都不会更新缓存。
+
+原有 **信任当前内容并建立本地基线...** 仍作为显式离线兜底，但在缺少 `BaseRevisions` 时也会接受既存本地修改。与现有 `CVS/BaseRevisions` 不同的文件始终保留为更改。需要恢复 CVS 的保守行为时，执行 **清除本地内容基线...**。
+
+### IDEA 2023.2 在 macOS 上回滚时原生崩溃
+
+IDEA 2023.2.8 自带 JBR 17.0.12。展开项很多的“更改”树可能触发 JetBrains Runtime 问题 [JBR-7659](https://youtrack.jetbrains.com/issue/JBR-7659)：macOS 可访问性桥接递归发送树节点展开事件，最终由 macOS 以 `Too many nested CFRunLoopRuns` 终止 IDE。这是运行时原生崩溃，不是 CVS 插件抛出的 Java 异常。初版已移除可避免的文件写入与嵌套 CVS UI，并把需要仓库数据的回滚移到独立可取消后台任务，但插件无法替换 IDE 运行时。
+
+如果不需要 VoiceOver/IDE 无障碍功能，可按 JetBrains 的规避建议，在 **帮助 → 编辑自定义 VM 选项** 中加入 `-Dsun.awt.mac.a11y.enabled=false`，然后重启 IDEA。需要 VoiceOver 时不要使用该参数；它会关闭 IDE 的可访问性桥接，也可能影响依赖该接口的窗口管理工具。此时应使用包含运行时修复的新版 IDE/JBR，并在执行一次性基线刷新前先折叠庞大的“更改”树。
 
 **多语言：** 英文基线 + `*_zh.properties`。IDEA 界面语言为中文时，文案自动切换（无需插件内开关）。
 
 安装：设置 → 插件 → ⚙️ → 从磁盘安装插件… → 选 zip → 重启。  
-细节见 [docs/platform-2026.2-notes.md](docs/platform-2026.2-notes.md) · 任务：[docs/task-mechanism.md](docs/task-mechanism.md)。
+细节见[平台说明](docs/platform-2026.2-notes.md) · [Rust 路线图](docs/rust-performance-roadmap.md) · [任务机制](docs/task-mechanism.md)。
 
 ## 目录结构
 
@@ -175,6 +219,7 @@ python3 scripts/check_i18n_keys.py
 | `trilead-ssh2-build213/` | 捆绑的 SSH 库源码 |
 | `lib/` | 预编译 jar（如 trilead） |
 | `testSource/` | 测试 |
+| `docs/` | 平台说明、任务边界与未来性能路线图 |
 
 ## 许可证
 

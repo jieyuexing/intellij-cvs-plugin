@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * author: lesya
@@ -77,7 +78,9 @@ public class CvsOperationExecutor {
   public void performActionSync(final CvsHandler handler, final CvsOperationExecutorCallback callback) {
     final CvsTabbedWindow tabbedWindow = myIsQuietOperation ? null : openTabbedWindow(handler);
 
+    final AtomicBoolean finishInvoked = new AtomicBoolean();
     final Runnable finish = () -> {
+      if (!finishInvoked.compareAndSet(false, true)) return;
       try {
         myResult.addAllErrors(handler.getErrorsExceptAborted());
         handler.finish();
@@ -144,6 +147,13 @@ public class CvsOperationExecutor {
 
           @Override
           public void onSuccess() {
+            finish.run();
+          }
+
+          @Override
+          public void onCancel() {
+            // A canceled CVS command can already have updated part of the working copy. Always run handler cleanup
+            // so Entries metadata is reconciled and completion callbacks can refresh the affected files.
             finish.run();
           }
         };

@@ -232,7 +232,7 @@ public final class PServerConnection
       this.socket = new Socket();
       final InetSocketAddress address =
         new InetSocketAddress(connectionSettings.getHostName(), connectionSettings.getPort());
-      this.socket.connect(address, connectionSettings.getConnectionTimeout());
+      this.socket.connect(address, connectionSettings.getConnectTimeout());
       this.socket.setSoTimeout(connectionSettings.getConnectionTimeout());
     }
   }

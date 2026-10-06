@@ -1,7 +1,7 @@
 # intellij-cvs-plugin — Agent 入口
 
 > 本文件是 **本 fork 仓库** 的工作合同，供人类与 Agent 共用。  
-> 不替代根仓 `harness-universe/AGENTS.md`；若本仓作为独立 Git 根打开，**以本文件为准**。
+> 本目录是 DSH workspace `intellij-cvs-plugin` 的独立 Git 根；进入本仓后以本文件为准。
 
 ## 0. 一句话
 
@@ -48,7 +48,7 @@
 
 - 无验收的「架构重写」
 - 引入与 CVS 无关的重型框架或第二套 VCS 实现
-- 把 harness-universe 控制面（Task Store、GTD 等）耦进插件运行时
+- 把 DSH Host、Task Store、GTD 等外部控制面耦进插件运行时
 
 ### P-03 Label / 文案全球化（en + zh）
 
@@ -138,7 +138,7 @@ smartcvs-src/messages/SmartCvsSrcBundle_zh.properties
 - [ ] 在当前维护者目标 IDE 上有最小验证说明（构建失败则写明阻塞）
 - [ ] `README` / 本文件仅在策略变化时更新，不每次机械改
 
-## 7. 与 harness-universe 的关系
+## 7. 与 DSH Host 的关系
 
-- 本插件源码可寄宿在 harness 的 `planet-resources/planet-projects/intellij-plugins/intellij-cvs-plugin`，但 **Git 权威是本仓库自身 remote**。
-- harness 的 Task/GTD/治理不自动成为本插件的发布门；跨仓协作时分别遵守各自 AGENTS。
+- 本插件源码只由当前 workspace 和本仓 remote 拥有；不得从退役树、Host 根或其它 workspace 运行、回退读取或发布。
+- DSH 的 Task/GTD/治理不自动成为本插件的发布门；Host 只负责登记与会话装配，插件构建、测试和发布继续由本仓合同拥有。

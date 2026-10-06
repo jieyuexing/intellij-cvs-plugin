@@ -26,7 +26,7 @@ public class SshConnectionUtils {
     if (proxy != null) {
       connection.setProxyData(proxy);
     }
-    connection.connect(null, connectionSettings.getConnectionTimeout(), connectionSettings.getConnectionTimeout());
+    connection.connect(null, connectionSettings.getConnectTimeout(), connectionSettings.getConnectionTimeout());
     authentication.authenticate(connection);
     //HTTPProxyException
     return connection;

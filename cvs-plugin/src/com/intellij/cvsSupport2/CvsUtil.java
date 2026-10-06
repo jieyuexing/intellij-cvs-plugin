@@ -91,7 +91,12 @@ public class CvsUtil {
     try {
       if (Registry.is("cvs.roots.refresh.uses.vfs")) {
         if (vFile.isDirectory()) {
-          return directoryIsUnderCVS(vFile);
+          if (directoryIsUnderCVS(vFile)) {
+            return true;
+          }
+          // IDEA 232 may omit ignored CVS admin directories from the VFS until the user explicitly
+          // reloads from disk. Fall back to the local filesystem so initial root discovery is complete.
+          return directoryIsUnderCVS(CvsVfsUtil.getFileFor(vFile));
         }
         return fileIsUnderCvs(getEntryFor(vFile));
       } else {
@@ -238,24 +243,25 @@ public class CvsUtil {
   }
 
   public static void removeEntryFor(File file) {
-    File entriesFile = file.getParentFile();
-    EntriesHandler handler = new EntriesHandler(entriesFile);
-    String charset = CvsApplicationLevelConfiguration.getCharset();
     try {
-      handler.read(charset);
+      removeEntryForOrThrow(file);
     }
     catch (IOException e) {
-      return;
+      LOG.warn("Cannot remove CVS entry for " + file, e);
     }
+  }
+
+  public static void removeEntryForOrThrow(@NotNull File file) throws IOException {
+    final File entriesFile = file.getParentFile();
+    if (entriesFile == null) {
+      throw new IOException("File has no parent directory: " + file);
+    }
+    final EntriesHandler handler = new EntriesHandler(entriesFile);
+    final String charset = CvsApplicationLevelConfiguration.getCharset();
+    handler.read(charset);
     Entries entries = handler.getEntries();
     entries.removeEntry(file.getName());
-
-    try {
-      handler.write(getLineSeparator(), charset);
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
+    handler.write(getLineSeparator(), charset);
     CvsEntriesManager.getInstance().removeEntryForFile(file.getParentFile(), file.getName());
   }
 
@@ -282,6 +288,23 @@ public class CvsUtil {
     entriesHandler.read(CvsApplicationLevelConfiguration.getCharset());
     entriesHandler.getEntries().addEntry(entry);
     entriesHandler.write(getLineSeparator(), CvsApplicationLevelConfiguration.getCharset());
+  }
+
+  /**
+   * Rewrites one CVS/Entries file once for a batch of entries from the same working-copy directory.
+   */
+  public static void saveEntriesInDirectory(@NotNull File directory,
+                                            @NotNull Collection<? extends Entry> replacementEntries) throws IOException {
+    if (replacementEntries.isEmpty()) return;
+    synchronized (Entries.class) {
+      final String charset = CvsApplicationLevelConfiguration.getCharset();
+      final EntriesHandler entriesHandler = new EntriesHandler(directory);
+      entriesHandler.read(charset);
+      for (Entry entry : replacementEntries) {
+        entriesHandler.getEntries().addEntry(entry);
+      }
+      entriesHandler.write(getLineSeparator(), charset);
+    }
   }
 
   public static String loadRepositoryFrom(File file) {
@@ -519,20 +542,50 @@ public class CvsUtil {
                                                      final String revision,
                                                      boolean makeReadOnly) {
     try {
-      final File cachedContentFile = getCachedContentFile(parent, name, revision);
-      if (cachedContentFile == null) return false;
-      final byte[] content = FileUtil.loadFileBytes(cachedContentFile);
-      final File file = new File(parent.getPath(), name);
-      FileUtil.createIfDoesntExist(file);
-      if (!file.canWrite() && !file.setWritable(true)) return false;
-      FileUtil.writeToFile(file, content);
-      if (makeReadOnly && !file.setWritable(false)) return false;
-      return file.setLastModified(cachedContentFile.lastModified());
+      return restoreFileFromCachedContentOrThrow(parent, name, revision, makeReadOnly);
     }
     catch (IOException e) {
       LOG.error(e);
       return false;
     }
+  }
+
+  /**
+   * Restores a cached base revision without rewriting a file whose bytes are already identical.
+   *
+   * @return {@code false} only when no cached revision exists; I/O and permission failures are reported
+   *         to the caller instead of being confused with a cache miss and retried against the repository.
+   */
+  public static boolean restoreFileFromCachedContentOrThrow(@NotNull VirtualFile parent,
+                                                             @NotNull String name,
+                                                             @NotNull String revision,
+                                                             boolean makeReadOnly) throws IOException {
+    final File cachedContentFile = getCachedContentFile(parent, name, revision);
+    if (cachedContentFile == null) return false;
+
+    final File file = new File(parent.getPath(), name);
+    if (file.exists() && !file.isFile()) {
+      throw new IOException("Restore target is not a regular file: " + file);
+    }
+    final boolean contentAlreadyMatches = file.isFile() && file.length() == cachedContentFile.length() &&
+                                          java.nio.file.Files.mismatch(file.toPath(), cachedContentFile.toPath()) == -1;
+    if (!contentAlreadyMatches) {
+      final byte[] content = FileUtil.loadFileBytes(cachedContentFile);
+      FileUtil.createIfDoesntExist(file);
+      if (!file.canWrite() && !file.setWritable(true)) {
+        throw new IOException("Cannot make restore target writable: " + file);
+      }
+      FileUtil.writeToFile(file, content);
+    }
+    final long baseTimestamp = cachedContentFile.lastModified();
+    if (file.lastModified() != baseTimestamp && !file.setLastModified(baseTimestamp)) {
+      // Content restoration succeeded. A timestamp failure should not start a second repository restore.
+      LOG.warn("Cannot restore timestamp for " + file);
+    }
+    if (makeReadOnly && file.canWrite() && !file.setWritable(false)) {
+      throw new IOException("Cannot make restored file read-only: " + file);
+    }
+    return true;
   }
 
   public static void storeContentForRevision(final VirtualFile file, final String revision, final byte[] bytes) {

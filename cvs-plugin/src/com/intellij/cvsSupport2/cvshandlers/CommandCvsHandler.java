@@ -38,6 +38,7 @@ import com.intellij.cvsSupport2.cvsoperations.cvsRemove.RemoveFilesOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.BranchOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.UpdateOperation;
+import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.RestoreFilesOperation;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDateImpl;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
@@ -288,6 +289,82 @@ public class CommandCvsHandler extends CvsHandler {
     });
 
     return cvsHandler;
+  }
+
+  /**
+   * Creates a single cancellable handler for a rollback's repository-backed restores. Files are grouped by the
+   * exact revision from CVS/Entries, then restored with one clean update per revision instead of one checkout per
+   * file. Commands are chunked to keep progress responsive for very large selections.
+   */
+  public static CvsHandler createRestoreFilesHandler(@NotNull FilePath[] files,
+                                                     @NotNull CvsConfiguration configuration) {
+    final int maxFilesPerCommand = 256;
+    final CompositeOperation operations = new CompositeOperation();
+    final List<RestoreFilesOperation> restoreOperations = new ArrayList<>();
+    final Map<String, List<FilePath>> filesByRevision = new LinkedHashMap<>();
+    final Map<FilePath, Entry> originalEntries = new LinkedHashMap<>();
+
+    for (FilePath file : files) {
+      final VirtualFile parent = file.getVirtualFileParent();
+      if (parent == null) continue;
+      final Entry entry = CvsEntriesManager.getInstance().getEntryFor(parent, file.getName());
+      final String revision = getRevision(entry);
+      if (entry == null || StringUtil.isEmpty(revision)) continue;
+      originalEntries.put(file, Entry.createEntryForLine(entry.toString()));
+      filesByRevision.computeIfAbsent(revision, ignored -> new ArrayList<>()).add(file);
+    }
+
+    for (Map.Entry<String, List<FilePath>> revisionGroup : filesByRevision.entrySet()) {
+      final List<FilePath> revisionFiles = revisionGroup.getValue();
+      for (int start = 0; start < revisionFiles.size(); start += maxFilesPerCommand) {
+        final RestoreFilesOperation operation =
+          new RestoreFilesOperation(revisionGroup.getKey(), configuration.MAKE_NEW_FILES_READONLY);
+        final int end = Math.min(start + maxFilesPerCommand, revisionFiles.size());
+        for (int index = start; index < end; index++) {
+          operation.addFile(revisionFiles.get(index).getIOFile());
+        }
+        restoreOperations.add(operation);
+        operations.addOperation(operation);
+      }
+    }
+
+    return new CommandCvsHandler(CvsBundle.message("operation.name.restore"), operations,
+                                 FileSetToBeUpdated.selectedFiles(files), PerformInBackgroundOption.DEAF) {
+      @Override
+      public void finish() {
+        final Set<File> restoredFiles = new HashSet<>();
+        for (RestoreFilesOperation operation : restoreOperations) {
+          restoredFiles.addAll(operation.getRestoredFiles());
+        }
+        final Map<File, List<Entry>> entriesByDirectory = new LinkedHashMap<>();
+        final Set<VirtualFile> parentsToClear = new HashSet<>();
+        for (Map.Entry<FilePath, Entry> original : originalEntries.entrySet()) {
+          final FilePath filePath = original.getKey();
+          final File ioFile = filePath.getIOFile();
+          final Entry entry = original.getValue();
+          if (ioFile.isFile() && restoredFiles.contains(ioFile.getAbsoluteFile())) {
+            entry.setConflict(CvsUtil.formatDate(new Date(ioFile.lastModified())));
+          }
+          final File parentDirectory = ioFile.getParentFile();
+          if (parentDirectory != null) {
+            entriesByDirectory.computeIfAbsent(parentDirectory, ignored -> new ArrayList<>()).add(entry);
+          }
+          final VirtualFile parent = filePath.getVirtualFileParent();
+          if (parent != null) parentsToClear.add(parent);
+        }
+        for (Map.Entry<File, List<Entry>> directoryEntries : entriesByDirectory.entrySet()) {
+          try {
+            CvsUtil.saveEntriesInDirectory(directoryEntries.getKey(), directoryEntries.getValue());
+          }
+          catch (IOException e) {
+            myErrors.add(new VcsException(e));
+          }
+        }
+        for (VirtualFile parent : parentsToClear) {
+          CvsEntriesManager.getInstance().clearCachedEntriesFor(parent);
+        }
+      }
+    };
   }
 
   public static CvsHandler createEditHandler(VirtualFile[] selectedFiles, boolean isReservedEdit) {
