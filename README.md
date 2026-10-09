@@ -156,7 +156,7 @@ export JAVA_HOME="$HOME/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Hom
 python3 scripts/check_i18n_keys.py
 python3 scripts/check_rust_roadmap.py
 ./gradlew buildPlugin
-# artifact: build/distributions/intellij-cvs-plugin-262.0.zip
+# artifact: build/distributions/intellij-cvs-plugin-262.0.1.zip
 ```
 
 **Versioning:** major tracks IDEA **2026.2** train (`262.x`).  
@@ -207,6 +207,18 @@ If VoiceOver/IDE accessibility is not required, JetBrains' workaround is to add 
 
 Install: Settings → Plugins → ⚙️ → Install Plugin from Disk… → pick the zip → restart.  
 Details: [platform notes](docs/platform-2026.2-notes.md) · [Rust roadmap](docs/rust-performance-roadmap.md) · [tasks](docs/task-mechanism.md).
+
+## Updates
+
+After the maintainer publishes the release, add this custom repository in **Settings → Plugins → ⚙ → Manage Plugin Repositories → +**:
+
+```text
+https://raw.githubusercontent.com/jieyuexing/intellij-cvs-plugin/main/updatePlugins.xml
+```
+
+Confirm the dialog, then check for plugin updates in **Settings → Plugins → Installed**. Install the **CVS (Community)** update and restart if prompted. The same repository applies to IDEA **2023.2** and **2026.2** (builds `232` through `262.*`); it uses this fork's plugin id `io.github.jieyuexing.cvs`. Once configured, future published versions can be installed through the IDE without choosing a ZIP from disk.
+
+Version **262.0.1** includes the passfile LF line-ending fix. Update metadata alone does not prove runtime compatibility; the existing smoke-test boundaries above still apply. Maintainers: see the [release contract](docs/release.md) for preparation, authorization, and the asset-before-index publication order.
 
 ## Layout
 

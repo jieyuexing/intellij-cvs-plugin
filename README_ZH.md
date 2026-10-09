@@ -156,7 +156,7 @@ export JAVA_HOME="$HOME/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Hom
 python3 scripts/check_i18n_keys.py
 python3 scripts/check_rust_roadmap.py
 ./gradlew buildPlugin
-# 产物: build/distributions/intellij-cvs-plugin-262.0.zip
+# 产物: build/distributions/intellij-cvs-plugin-262.0.1.zip
 ```
 
 **版本约定：** 主号对齐 IDEA **2026.2** 平台线（`262.x`）。  
@@ -207,6 +207,18 @@ IDEA 2023.2.8 自带 JBR 17.0.12。展开项很多的“更改”树可能触发
 
 安装：设置 → 插件 → ⚙️ → 从磁盘安装插件… → 选 zip → 重启。  
 细节见[平台说明](docs/platform-2026.2-notes.md) · [Rust 路线图](docs/rust-performance-roadmap.md) · [任务机制](docs/task-mechanism.md)。
+
+## 在线更新
+
+维护者完成发版后，在 **设置 → 插件 → ⚙ → 管理插件仓库 → +** 添加以下自定义仓库：
+
+```text
+https://raw.githubusercontent.com/jieyuexing/intellij-cvs-plugin/main/updatePlugins.xml
+```
+
+确认对话框后，在 **设置 → 插件 → 已安装** 中检查插件更新，安装 **CVS (Community)** 更新，并按提示重启。IDEA **2023.2** 与 **2026.2** 使用同一地址（build `232` 至 `262.*`），对应本 fork 的插件 ID `io.github.jieyuexing.cvs`。配置一次后，后续已发布版本可直接在 IDE 中更新，无需每次从磁盘选择 ZIP。
+
+版本 **262.0.1** 包含 passfile 固定 LF 换行修复。更新元数据不代表运行时兼容性已验收，上文的冒烟测试边界仍有效。维护者的准备命令、授权与先资产后索引的发布顺序见[发版合同](docs/release.md)。
 
 ## 目录结构
 
