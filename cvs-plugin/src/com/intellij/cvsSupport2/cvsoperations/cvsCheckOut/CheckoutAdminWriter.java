@@ -15,7 +15,7 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.cvsCheckOut;
 
-import com.intellij.util.containers.SLRUCache;
+import com.intellij.cvsSupport2.util.CvsSegmentedLruCache;
 import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.CvsRoot;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
@@ -123,7 +123,7 @@ public class CheckoutAdminWriter implements IAdminWriter {
     }
   }
 
-  private static class MyCache extends SLRUCache<String, EntriesHandler> {
+  private static class MyCache extends CvsSegmentedLruCache<String, EntriesHandler> {
     private final String myCharset;
     private final String myLineSeparator;
 
