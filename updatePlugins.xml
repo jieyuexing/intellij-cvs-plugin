@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <plugins>
-  <plugin id="io.github.jieyuexing.cvs" version="262.0.1" url="https://github.com/jieyuexing/intellij-cvs-plugin/releases/download/262.0.1/intellij-cvs-plugin-262.0.1.zip">
+  <plugin id="io.github.jieyuexing.cvs" version="262.0.2" url="https://github.com/jieyuexing/intellij-cvs-plugin/releases/download/262.0.2/intellij-cvs-plugin-262.0.2.zip">
     <idea-version since-build="232" until-build="262.*" />
-    <name>CVS (Community)</name>
+    <name>OpenCVS</name>
   </plugin>
 </plugins>
