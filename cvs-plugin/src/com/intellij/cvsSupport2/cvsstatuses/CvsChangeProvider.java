@@ -38,7 +38,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.cvsSupport2.util.CvsCharsetUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -571,7 +571,7 @@ public class CvsChangeProvider implements ChangeProvider {
             return;
           }
         }
-        else if (CharsetToolkit.bytesToString(cachedContent, filePath.getCharset()).equals(afterRevision.getContent())) {
+        else if (CvsCharsetUtil.bytesToString(cachedContent, filePath.getCharset()).equals(afterRevision.getContent())) {
           return;
         }
       }
@@ -756,7 +756,7 @@ public class CvsChangeProvider implements ChangeProvider {
     @Nullable
     public String getContent() throws VcsException {
       final byte[] fileBytes = getContentAsBytes();
-      return fileBytes == null ? null : CharsetToolkit.bytesToString(fileBytes, myPath.getCharset());
+      return fileBytes == null ? null : CvsCharsetUtil.bytesToString(fileBytes, myPath.getCharset());
     }
 
     @Override

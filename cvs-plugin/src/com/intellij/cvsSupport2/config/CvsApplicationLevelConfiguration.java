@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.SystemProperties;
 import java.io.BufferedReader;
 import java.io.File;
@@ -94,7 +93,7 @@ public class CvsApplicationLevelConfiguration implements PersistentStateComponen
   }
 
   private static boolean encodingExists(String encoding) {
-    final Charset[] availableCharsets = CharsetToolkit.getAvailableCharsets();
+    final Charset[] availableCharsets = Charset.availableCharsets().values().toArray(new Charset[0]);
     for (Charset availableCharset : availableCharsets) {
       if (availableCharset.name().equals(encoding)) {
         return true;
@@ -156,7 +155,7 @@ public class CvsApplicationLevelConfiguration implements PersistentStateComponen
   @NotNull public static String getCharset() {
     String value = getInstance().ENCODING;
     if (DEFAULT.equals(value)) {
-      return CharsetToolkit.getDefaultSystemCharset().name();
+      return Charset.defaultCharset().name();
     } else {
       return value;
     }
