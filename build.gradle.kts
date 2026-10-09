@@ -106,6 +106,13 @@ intellijPlatform {
         name = "OpenCVS"
         version = providers.gradleProperty("pluginVersion")
         changeNotes = """
+            <p><b>262.0.4</b></p>
+            <ul>
+              <li>Replace IntelliJ Platform Internal API usages (CharsetToolkit, SLRUCache, FileChooserFactoryImpl, ChangesUtil, ActionsBundle, IdeBundle) with public APIs or plugin-owned code; behavior is kept.</li>
+              <li>Move remaining hard-coded UI texts to the plugin bundle; English and Chinese UI follow the IDE language.</li>
+              <li>将 IntelliJ 平台内部 API（CharsetToolkit、SLRUCache、FileChooserFactoryImpl、ChangesUtil、ActionsBundle、IdeBundle）替换为公开 API 或插件自有实现，行为保持不变。</li>
+              <li>剩余写死的界面文字改为插件语言包；中英文界面随 IDE 语言切换。</li>
+            </ul>
             <p><b>262.0.3</b></p>
             <ul>
               <li>Prevent canceled or failed CVS content requests from caching an empty or partial diff baseline.</li>
