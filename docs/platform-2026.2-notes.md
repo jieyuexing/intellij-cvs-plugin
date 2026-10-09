@@ -150,3 +150,12 @@ collision remain Marketplace approval risks; these reports do not prove runtime
 checkout/update/commit/rollback behavior. Verifier also printed missing layout paths
 for the local modular IDE; both verdicts completed, but this diagnostic should be
 retained when interpreting the coverage.
+
+
+## Internal API follow-up (2026-10-09)
+
+The follow-up removed 21 of the 23 remaining internal usages. IU-232 and IU-243
+now report zero; IU-262 and WS-262 report only the two AbstractVcs root overrides.
+All four targets report zero compatibility problems. Version remains 262.0.3;
+no prepare or runtime acceptance was performed. Root-mapping migration needs a
+separate decision: see the [investigation and manual smoke checklist](internal-api-review.md).
