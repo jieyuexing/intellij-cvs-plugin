@@ -92,6 +92,7 @@ If VoiceOver and IDE accessibility are not needed, add `-Dsun.awt.mac.a11y.enabl
 
 | Version | Date | Changes |
 | --- | --- | --- |
+| `262.0.4` | 2026-10-09 | Internal API usages replaced with public APIs or plugin-owned code (30 of 32 reported for IDEA 2026.2); remaining hard-coded UI texts moved to English/Chinese bundles. |
 | `262.0.3` | 2026-10-09 | Canceled or failed content requests no longer cache an empty diff baseline; zero-byte `CVS/BaseRevisions` caches are ignored and refreshed. |
 | `262.0.2` | 2026-10-09 | Renamed to OpenCVS; original icons; signed distribution for GitHub and the Marketplace. |
 | `262.0.1` | 2026-10-09 | `~/.cvspass` is always written with LF line endings. |
