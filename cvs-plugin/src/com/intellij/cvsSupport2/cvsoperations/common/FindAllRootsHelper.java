@@ -25,6 +25,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
+import java.util.function.Predicate;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -86,12 +89,17 @@ public class FindAllRootsHelper {
   }
 
   /**
-   * Discovers top-level CVS working copies from disk without depending on the current VFS snapshot.
-   * A discovered working copy is a scan boundary: its versioned descendants belong to that root and
-   * must not be returned as thousands of separate roots.
+   * 从磁盘发现工作副本，不依赖 VFS。普通 Entries 子目录仍归父根；独立嵌套
+   * 工作副本单独返回。扫描不跟随目录符号链接，也不进入 CVS 管理目录。
    */
   public static @NotNull ScanResult findVersionedPathsUnder(@NotNull Collection<? extends Path> containers,
                                                              @NotNull ScanProgress progress) {
+    return findVersionedPathsUnder(containers, progress, path -> true);
+  }
+
+  public static @NotNull ScanResult findVersionedPathsUnder(@NotNull Collection<? extends Path> containers,
+                                                            @NotNull ScanProgress progress,
+                                                            @NotNull Predicate<Path> shouldVisit) {
     final Deque<Path> pending = new ArrayDeque<>();
     for (Path container : containers) {
       if (container == null) continue;
@@ -109,13 +117,18 @@ public class FindAllRootsHelper {
     while (!pending.isEmpty()) {
       progress.checkCanceled();
       final Path directory = pending.removeFirst();
-      if (!visited.add(directory)) continue;
+      if (!visited.add(directory) || !shouldVisit.test(directory)) continue;
 
       scannedDirectories++;
       progress.onDirectory(directory, scannedDirectories, found.size());
-      if (isCvsWorkingCopyRoot(directory)) {
-        found.add(directory);
-        continue;
+      try {
+        if (isCvsWorkingCopyRoot(directory) &&
+            (containers.stream().anyMatch(path -> normalize(path).equals(directory)) || !isTrackedChild(directory))) {
+          found.add(directory);
+        }
+      }
+      catch (IOException | SecurityException e) {
+        errors++;
       }
 
       final List<Path> children = new ArrayList<>();
@@ -166,6 +179,31 @@ public class FindAllRootsHelper {
     return Files.isRegularFile(admin.resolve(CvsUtil.ENTRIES), LinkOption.NOFOLLOW_LINKS) &&
            Files.isRegularFile(admin.resolve(CvsUtil.CVS_ROOT_FILE), LinkOption.NOFOLLOW_LINKS) &&
            Files.isRegularFile(admin.resolve("Repository"), LinkOption.NOFOLLOW_LINKS);
+  }
+
+  private static boolean isTrackedChild(Path directory) throws IOException {
+    Path parent = directory.getParent();
+    if (parent == null || !isCvsWorkingCopyRoot(parent)) return false;
+    // Entries.Log 里的增删由后条覆盖，避免 update 尚未合并日志时误判。
+    String name = new String(directory.getFileName().toString().getBytes(Charset.defaultCharset()), StandardCharsets.ISO_8859_1);
+    String entry = "D/" + name + "/";
+    boolean tracked = false;
+    for (String line : Files.readAllLines(parent.resolve("CVS/Entries"), StandardCharsets.ISO_8859_1)) {
+      if (line.startsWith(entry)) tracked = true;
+    }
+    Path log = parent.resolve("CVS/Entries.Log");
+    if (Files.isRegularFile(log, LinkOption.NOFOLLOW_LINKS)) {
+      for (String line : Files.readAllLines(log, StandardCharsets.ISO_8859_1)) {
+        if (line.startsWith("A " + entry)) tracked = true;
+        if (line.startsWith("R " + entry)) tracked = false;
+      }
+    }
+    if (!tracked) return false;
+    String parentRoot = Files.readString(parent.resolve("CVS/Root"), StandardCharsets.ISO_8859_1).trim();
+    String childRoot = Files.readString(directory.resolve("CVS/Root"), StandardCharsets.ISO_8859_1).trim();
+    String parentRepository = Files.readString(parent.resolve("CVS/Repository"), StandardCharsets.ISO_8859_1).trim();
+    String childRepository = Files.readString(directory.resolve("CVS/Repository"), StandardCharsets.ISO_8859_1).trim();
+    return parentRoot.equals(childRoot) && childRepository.equals(parentRepository.replaceAll("/+$", "") + "/" + name);
   }
 
   private static @NotNull Path normalize(@NotNull Path path) {

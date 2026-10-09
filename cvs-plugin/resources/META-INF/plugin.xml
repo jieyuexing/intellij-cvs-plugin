@@ -58,6 +58,9 @@
     <projectService serviceImplementation="com.intellij.cvsSupport2.application.CvsStorageSupportingDeletionComponent"/>
     <projectService serviceImplementation="com.intellij.cvsSupport2.cvsstatuses.CvsLocalContentBaseline"/>
 
+    <projectService serviceImplementation="com.intellij.cvsSupport2.cvsoperations.common.CvsRootMappingHistory"/>
+    <vcsRootChecker implementation="com.intellij.cvsSupport2.cvsoperations.common.CvsRootChecker"/>
+
     <vcsCheckinHandlerFactory implementation="com.intellij.cvsSupport2.CvsCheckinHandlerFactory"/>
 
     <search.projectOptionsTopHitProvider implementation="com.intellij.cvsSupport2.config.CvsOptionsTopHitProvider"/>

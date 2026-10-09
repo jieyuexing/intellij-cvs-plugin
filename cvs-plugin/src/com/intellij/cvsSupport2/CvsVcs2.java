@@ -45,7 +45,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.function.Function;
 
 /**
  * This class intended to be an adapter of  AbstractVcs and ProjectComponent interfaces for CVS
@@ -351,24 +350,8 @@ public final class CvsVcs2 extends AbstractVcs implements TransactionProvider, E
     return CvsUtil.REVISION_PATTERN;
   }
 
-  public boolean isVersionedDirectory(final VirtualFile dir) {
-    final VirtualFile child = dir.findChild(NAME);
-    return child != null && child.isDirectory();
-  }
-
   public CvsCheckoutProvider getCheckoutProvider() {
     return myCvsCheckoutProvider;
-  }
-
-  @Override
-  public RootsConvertor getCustomConvertor() {
-    return new RootsConvertor() {
-      @Override
-      @NotNull
-      public List<VirtualFile> convertRoots(@NotNull List<VirtualFile> result) {
-        return myRootDiscovery.convertRoots(result);
-      }
-    };
   }
 
   @Override
@@ -388,9 +371,8 @@ public final class CvsVcs2 extends AbstractVcs implements TransactionProvider, E
     return true;
   }
 
-  @NotNull
   @Override
-  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
-    return in;
+  public boolean allowsNestedRoots() {
+    return true;
   }
 }

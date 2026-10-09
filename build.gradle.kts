@@ -95,6 +95,11 @@ intellijPlatform {
             local(file("${System.getProperty("user.home")}/Applications/IntelliJ IDEA.app"))
             create("IU", "2023.2.8")
             create("IU", "2024.3.6")
+            // 可传已校验发行包路径离线验证；默认仍下载同一精确版本。
+            val ide253 = providers.gradleProperty("verifier253Path").orNull
+            if (ide253 != null) local(file(ide253)) else create("IU", "2025.3.6.1")
+            val ide261 = providers.gradleProperty("verifier261Path").orNull
+            if (ide261 != null) local(file(ide261)) else create("IU", "2026.1.5")
             if (providers.gradleProperty("verifyCrossProduct").orNull == "true") {
                 create("WS", "2026.2")
             }
@@ -106,6 +111,13 @@ intellijPlatform {
         name = "OpenCVS"
         version = providers.gradleProperty("pluginVersion")
         changeNotes = """
+            <p><b>262.0.5</b></p>
+            <ul>
+              <li>Remove the remaining internal root API overrides. Detect CVS roots through public APIs and automatically expand container mappings after a complete, cancellable background scan.</li>
+              <li>Keep nested working-copy changes visible and preserve IDEA 2023.2 dirty-scope handling. Mapping migration is idempotent and records its before/after paths for rollback.</li>
+              <li>移除剩余的内部根 API 覆写，改用公开 API；可取消的后台扫描完整结束后，自动将容器映射展开为工作副本根映射。</li>
+              <li>保留嵌套工作副本改动与 IDEA 2023.2 的 dirty-scope 处理；映射迁移幂等，并保存前后路径以便回退。</li>
+            </ul>
             <p><b>262.0.4</b></p>
             <ul>
               <li>Replace IntelliJ Platform Internal API usages (CharsetToolkit, SLRUCache, FileChooserFactoryImpl, ChangesUtil, ActionsBundle, IdeBundle) with public APIs or plugin-owned code; behavior is kept.</li>
