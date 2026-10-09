@@ -142,3 +142,7 @@ smartcvs-src/messages/SmartCvsSrcBundle_zh.properties
 
 - 本插件源码只由当前 workspace 和本仓 remote 拥有；不得从退役树、Host 根或其它 workspace 运行、回退读取或发布。
 - DSH 的 Task/GTD/治理不自动成为本插件的发布门；Host 只负责登记与会话装配，插件构建、测试和发布继续由本仓合同拥有。
+
+## 8. 发版路由
+
+- 发版 / 在线更新 → `python3 scripts/release.py prepare|publish --receipt <仓外任务目录/prepare.json>` → [docs/release.md](docs/release.md)。版本提交与更新 XML 提交分开；先确认 Release ZIP 可下载，再公开新 XML。push / 发版仍须用户明确授权。
