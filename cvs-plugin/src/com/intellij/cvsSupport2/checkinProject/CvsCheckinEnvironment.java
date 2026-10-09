@@ -114,10 +114,8 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     for (FilePath file : files) {
       if (file.isDirectory()) {
         VcsBalloonProblemNotifier.showOverChangesView(myProject,
-                                                      "Locally deleted directories cannot be removed from CVS. To remove a locally " +
-                                                      "deleted directory from CVS, first invoke Rollback and then use " +
-                                                      ApplicationNamesInfo.getInstance().getFullProductName() +
-                                                      "'s Delete.",
+                                                      CvsBundle.message("warning.locally.deleted.directories.cannot.be.removed",
+                                                                        ApplicationNamesInfo.getInstance().getFullProductName()),
                                                       MessageType.WARNING);
         break;
       }

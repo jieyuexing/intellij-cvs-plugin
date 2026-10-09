@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.actions.merge.CvsMergeProvider;
 import com.intellij.cvsSupport2.actions.update.UpdateSettingsOnCvsConfiguration;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
@@ -79,7 +80,7 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
       if (myConfiguration.getBranch2ToMergeWith() != null) {
         mergeString += " -j " + myConfiguration.getBranch2ToMergeWith();
       }
-      return "Merge (" + mergeString + ") wasn't started, only update (-r " + myUpdateTagName + ") was performed";
+      return CvsBundle.message("message.merge.interrupted.before.start", mergeString, myUpdateTagName);
     }
 
     @Override

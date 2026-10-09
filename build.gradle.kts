@@ -106,6 +106,8 @@ intellijPlatform {
             <ul>
               <li>Prevent canceled or failed CVS content requests from caching an empty or partial diff baseline.</li>
               <li>Ignore and refresh zero-byte BaseRevisions caches left by earlier versions.</li>
+              <li>取消或失败的 CVS 内容请求不再缓存空的或部分的 diff 基线。</li>
+              <li>忽略并刷新早期版本留下的零字节 BaseRevisions 缓存。</li>
             </ul>
         """.trimIndent()
 
