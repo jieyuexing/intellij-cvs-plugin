@@ -125,7 +125,7 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
     }
     final List<String> lines = CvsFileUtil.readLinesFrom(passFile, cvsRoot);
     try {
-      CvsFileUtil.storeLines(lines, passFile);
+      CvsFileUtil.storeLines(lines, passFile, "\n");
     }
     catch (IOException e) {
       LOG.error(e);
@@ -137,7 +137,8 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
     FileUtil.createIfDoesntExist(passFile);
     final List<String> lines = CvsFileUtil.readLinesFrom(passFile);
     lines.add(stringConfiguration + " " + scrambledPassword);
-    CvsFileUtil.storeLines(lines, passFile);
+    // 原生 CVS 读取 passfile 时只去掉 LF，不能沿用 IDE 的 CRLF 设置。
+    CvsFileUtil.storeLines(lines, passFile, "\n");
   }
 
   @Nullable
