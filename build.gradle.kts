@@ -102,11 +102,10 @@ intellijPlatform {
         name = "OpenCVS"
         version = providers.gradleProperty("pluginVersion")
         changeNotes = """
-            <p><b>262.0.2</b></p>
+            <p><b>262.0.3</b></p>
             <ul>
-              <li>Rename the community fork to OpenCVS while keeping its plugin ID.</li>
-              <li>Add original light and dark revision-branch icons and clarify the description.</li>
-              <li>Prepare signed distributions shared by GitHub and JetBrains Marketplace.</li>
+              <li>Prevent canceled or failed CVS content requests from caching an empty or partial diff baseline.</li>
+              <li>Ignore and refresh zero-byte BaseRevisions caches left by earlier versions.</li>
             </ul>
         """.trimIndent()
 

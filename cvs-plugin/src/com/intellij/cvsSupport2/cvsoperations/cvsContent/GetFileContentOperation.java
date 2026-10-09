@@ -13,6 +13,7 @@ import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.Command;
+import org.netbeans.lib.cvsclient.command.CommandAbortedException;
 import org.netbeans.lib.cvsclient.command.checkout.CheckoutCommand;
 import org.netbeans.lib.cvsclient.file.FileObject;
 
@@ -55,12 +57,12 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     }
 
     public void messageSent(final byte[] byteMessage, final boolean tagged) {
-      if (myContent == null) myContent = new ByteArrayOutputStream();
       myLastTagIsText = false;
       if (tagged) {
         String tagType = readTagTypeFrom(byteMessage);
         if (tagType != null) {
           if (TEXT_MESSAGE_TAG.equals(tagType)) {
+            if (myContent == null) myContent = new ByteArrayOutputStream();
             final int textStartPosition = tagType.length();
             if (myContent.size() > 0) {
               myContent.write('\n');
@@ -70,6 +72,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
           }
         }
       } else {
+        if (myContent == null) myContent = new ByteArrayOutputStream();
         if (myContent.size() > 0) {
           myContent.write('\n');
         }
@@ -99,7 +102,9 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
 
   private byte myState = NOT_LOADED;
 
-  private final FileContentReader myReader = new FileContentReader();
+  private FileContentReader myReader = new FileContentReader();
+  private boolean myCommandSucceeded;
+  private boolean myRemovedEntry;
 
   private byte[] myFileBytes = null;
   private String myRevision;
@@ -174,48 +179,53 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
 
   }
 
-  public synchronized byte @NotNull [] getFileBytes() {
-    if (myFileBytes == null) {
-      if (myState == DELETED) return ArrayUtilRt.EMPTY_BYTE_ARRAY;
-      myFileBytes = loadFileBytes();
+  @Override
+  public void execute(CvsExecutionEnvironment environment, boolean underReadAction)
+    throws VcsException, CommandAbortedException {
+    myState = NOT_LOADED;
+    myFileBytes = null;
+    myReader = new FileContentReader();
+    myCommandSucceeded = false;
+    myRemovedEntry = false;
+    super.execute(environment, underReadAction);
+    // 无异常返回仍可能是协议 error/EOF，或取消、已报告错误；均不能接受部分内容。
+    if (!myCommandSucceeded || environment.getCvsCommandStopper().isAborted() ||
+        !environment.getErrorProcessor().getErrors().isEmpty()) return;
+    if (myRemovedEntry) {
+      myState = DELETED;
     }
-    return myFileBytes;
+    else if (!myReader.isEmpty()) {
+      myFileBytes = myReader.getReadContent();
+      myState = SUCCESSFULLY_LOADED;
+    }
+    else {
+      // checkout -p 无内容不能证明文件已删除，保守地留给调用方报错或重试。
+      myState = FILE_NOT_FOUND;
+    }
+  }
+
+  @Override
+  protected void commandCompleted(boolean successfully) {
+    myCommandSucceeded = successfully;
+  }
+
+  public synchronized byte @Nullable [] getFileBytes() {
+    return myState == DELETED ? ArrayUtilRt.EMPTY_BYTE_ARRAY : tryGetFileBytes();
   }
 
   public synchronized byte @Nullable [] tryGetFileBytes() {
-    if (myFileBytes == null && myState == LOADING) {
-      myFileBytes = loadFileBytes();
-    }
-    return myFileBytes;
+    return myState == SUCCESSFULLY_LOADED ? myFileBytes : null;
   }
 
   public boolean isDeleted() {
-    if (myState == LOADING) {
-      getFileBytes();
-    }
     return myState == DELETED;
-  }
-
-  private synchronized byte @NotNull [] loadFileBytes() {
-    if (myState != LOADING) {
-      LOG.error("state = " + myState);
-    }
-    if (myReader.isEmpty()) {
-      myState = DELETED;
-      return ArrayUtilRt.EMPTY_BYTE_ARRAY;
-    }
-    else {
-      myState = SUCCESSFULLY_LOADED;
-      return myReader.getReadContent();
-    }
   }
 
   @Override
   public void gotEntry(FileObject abstractFileObject, Entry entry) {
     super.gotEntry(abstractFileObject, entry);
     if (entry == null) {
-      myState = DELETED;
-      myFileBytes = ArrayUtilRt.EMPTY_BYTE_ARRAY;
+      myRemovedEntry = true;
     }
     else {
       myRevision = entry.getRevision();
@@ -224,12 +234,11 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
   }
 
   public boolean fileNotFound() {
-    tryGetFileBytes();
     return myState == FILE_NOT_FOUND;
   }
 
   public boolean isLoaded() {
-    return myState != NOT_LOADED;
+    return myState == SUCCESSFULLY_LOADED || myState == DELETED;
   }
 
   public CvsRevisionNumber getRevisionNumber() {

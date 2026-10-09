@@ -254,7 +254,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
       cvsMessagesListener.commandStarted(commandString);
       setProgressText(CvsBundle.message("progress.text.command.running.for.file", getOperationName(), root.getCvsRootAsString()));
       try {
-        command.execute(requestProcessor, eventManager, eventManager, clientEnvironment, progressViewer);
+        commandCompleted(command.execute(requestProcessor, eventManager, eventManager, clientEnvironment, progressViewer));
       }
       catch (AuthenticationException e) {
         throw root.processException(new CommandException(e, "Authentication problem"));
@@ -270,6 +270,9 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
       executeFinishActions();
     }
   }
+
+  // 默认不改变其他操作的完成语义；取内容操作需要保留协议成功信号。
+  protected void commandCompleted(boolean successfully) {}
 
   @NonNls protected abstract String getOperationName();
 
