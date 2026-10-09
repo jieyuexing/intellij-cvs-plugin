@@ -5,7 +5,6 @@ import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.connections.pserver.ui.PServerSettingsPanel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import java.awt.BorderLayout;
 import java.nio.charset.Charset;
 import java.util.Objects;
@@ -32,7 +31,7 @@ public class GlobalCvsSettingsPanel {
     myPServerPanel.add(myPServerSettingsPanel.getPanel(), BorderLayout.CENTER);
 
     myCharset.addItem(CvsApplicationLevelConfiguration.DEFAULT);
-    final Charset[] availableCharsets = CharsetToolkit.getAvailableCharsets();
+    final Charset[] availableCharsets = Charset.availableCharsets().values().toArray(new Charset[0]);
     for (Charset charset : availableCharsets) {
       myCharset.addItem(charset.name());
     }

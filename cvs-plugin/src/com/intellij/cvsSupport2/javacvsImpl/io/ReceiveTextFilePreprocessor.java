@@ -5,7 +5,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.cvsoperations.common.ReceivedFileProcessor;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.cvsSupport2.util.CvsCharsetUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.netbeans.lib.cvsclient.file.IReaderFactory;
 import org.netbeans.lib.cvsclient.file.IReceiveTextFilePreprocessor;
@@ -53,7 +53,7 @@ public class ReceiveTextFilePreprocessor implements IReceiveTextFilePreprocessor
             target.write(line);
           }
           else {
-            target.write(charSet.encode(CharsetToolkit.bytesToString(line, StandardCharsets.UTF_8)).array());
+            target.write(charSet.encode(CvsCharsetUtil.bytesToString(line, StandardCharsets.UTF_8)).array());
           }
         }
       }

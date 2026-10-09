@@ -32,7 +32,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.cvsSupport2.util.CvsCharsetUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +64,7 @@ public class CvsContentRevision implements ByteBackedContentRevision {
   @Nullable
   public String getContent() throws VcsException {
     byte[] content = getContentAsBytes();
-    return content == null ? null : CharsetToolkit.bytesToString(content, myLocalFile.getCharset());
+    return content == null ? null : CvsCharsetUtil.bytesToString(content, myLocalFile.getCharset());
   }
 
   @Override
