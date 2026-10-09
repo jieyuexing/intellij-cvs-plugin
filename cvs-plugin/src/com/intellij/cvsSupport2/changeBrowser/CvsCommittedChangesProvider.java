@@ -20,7 +20,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.cvsSupport2.util.CvsValidParent;
 import com.intellij.openapi.vcs.changes.committed.RepositoryLocationGroup;
 import com.intellij.openapi.vcs.changes.committed.VcsCommittedListsZipper;
 import com.intellij.openapi.vcs.changes.committed.VcsCommittedListsZipperAdapter;
@@ -360,7 +360,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
       }
     }
     else {
-      final VirtualFile validParent = ChangesUtil.findValidParentAccurately(filePath);
+      final VirtualFile validParent = CvsValidParent.find(filePath);
       if (validParent == null) return false;
       localTag = getDirectoryTag(validParent);
     }
