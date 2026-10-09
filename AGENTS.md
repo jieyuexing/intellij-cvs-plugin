@@ -14,7 +14,7 @@
 | 仓库 | https://github.com/jieyuexing/intellij-cvs-plugin |
 | 维护者 | jieyuexing |
 | Plugin id | `io.github.jieyuexing.cvs`（≠ 官方 `CVS`） |
-| 显示名 | CVS (Community) |
+| 显示名 | OpenCVS |
 | 上游源码 | https://github.com/JetBrains/intellij-obsolete-plugins/tree/master/cvs |
 | 官方 Marketplace（冻结） | https://plugins.jetbrains.com/plugin/10746-cvs · 最后 **223.0** · IDEA **2020.3 — 2022.1.4** |
 | 许可证 | Apache-2.0（见 `LICENSE`、`SOURCE.txt`） |
@@ -146,3 +146,5 @@ smartcvs-src/messages/SmartCvsSrcBundle_zh.properties
 ## 8. 发版路由
 
 - 发版 / 在线更新 → `python3 scripts/release.py prepare|publish --receipt <仓外任务目录/prepare.json>` → [docs/release.md](docs/release.md)。版本提交与更新 XML 提交分开；先确认 Release ZIP 可下载，再公开新 XML。push / 发版仍须用户明确授权。
+
+- 签名初始化 / 轮换 → `python3 -B scripts/setup_signing.py`（初始化须授权，已有材料拒绝覆盖）；Marketplace 后续发布 → `python3 -B scripts/release.py marketplace --first-upload-completed --receipt <仓外回执>` → [docs/release.md](docs/release.md)「262.0.2：签名与 Marketplace」。首次网页上传由用户执行；上传另行授权。

@@ -14,7 +14,7 @@ This is a fork of:
   https://github.com/JetBrains/intellij-obsolete-plugins/tree/master/cvs
 GitHub repo (planned): https://github.com/jieyuexing/intellij-cvs-plugin
 plugin id:             io.github.jieyuexing.cvs   (NOT JetBrains id "CVS")
-plugin display name:   CVS (Community)
+plugin display name:   OpenCVS
 vendor:                jieyuexing
 vendor url:            https://github.com/jieyuexing
 vendor email:          jieyuexing@outlook.com

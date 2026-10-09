@@ -1,34 +1,25 @@
 <idea-plugin>
-  <name>CVS (Community)</name>
+  <name>OpenCVS</name>
   <id>io.github.jieyuexing.cvs</id>
   <vendor email="jieyuexing@outlook.com" url="https://github.com/jieyuexing">jieyuexing</vendor>
   <resource-bundle>messages.CvsBundle</resource-bundle>
   <category>VCS Integration</category>
-  <description>
-      <![CDATA[
-      <b>Fork notice</b><br>
-      This plugin is a community fork maintained by <b>jieyuexing</b>.
-      It is <b>not</b> the official JetBrains plugin and is <b>not affiliated with JetBrains</b>.<br>
-      The official Marketplace plugin
-      (<a href="https://plugins.jetbrains.com/plugin/10746-cvs">10746-cvs</a>)
-      last released <b>223.0</b> for IDEA <b>2020.3 — 2022.1.4</b> (builds 203.1 — 221.*)
-      and is not advancing further. This project restarts maintenance under a new plugin id.
-      Compatible with IntelliJ IDEA <b>2023.2</b> (build 232) through <b>2026.2</b> (build 262).
-      Maintainer primary: 2026.2.1; secondary: 2023.2.8.<br>
-      Upstream source:
-      <a href="https://github.com/JetBrains/intellij-obsolete-plugins/tree/master/cvs">JetBrains/intellij-obsolete-plugins (cvs)</a><br>
-      Maintainer repository:
-      <a href="https://github.com/jieyuexing/intellij-cvs-plugin">jieyuexing/intellij-cvs-plugin</a><br><br>
-
-      Allows working with CVS version control system.
-      The following features are available:
-        <ul>
-        <li>Dedicated page under the Version Control node in the Settings/Preferences dialog.</li>
-        <li>When CVS is not enabled, it is still possible to browse, check out sources from and import into the available CVS repositories.</li>
-        <li>When CVS is enabled, the CVS node appears on the VCS menu, and on the context menu of the editor.
-        </ul>
-      ]]>
-   </description>
+  <description><![CDATA[
+    <p>Not affiliated with the OpenBSD OpenCVS project or JetBrains.</p>
+    <p><b>OpenCVS</b> brings CVS version control to maintained IntelliJ IDEA installations.
+    Browse repositories, check out and update working copies, commit changes, inspect history,
+    compare revisions, and manage CVS settings from the IDE. English and Chinese UI resources
+    follow the IDE display language.</p>
+    <p>This is an independent community fork of JetBrains' frozen CVS plugin, maintained by
+    jieyuexing. It is not an official JetBrains product and is not affiliated with JetBrains.</p>
+    <p>The declared installation range is IntelliJ IDEA 2023.2 through 2026.2
+    (builds 232–262.*). Maintenance targets are 2023.2.8 and 2026.2.1; this range is not a
+    guarantee that every API path has been validated. See the source repository's platform
+    notes for compatibility findings and outstanding runtime checks.</p>
+    <p><a href="https://github.com/jieyuexing/intellij-cvs-plugin">Source code and issue tracker</a> ·
+    <a href="https://github.com/jieyuexing/intellij-cvs-plugin/blob/main/LICENSE">Apache License 2.0</a> ·
+    <a href="https://github.com/JetBrains/intellij-obsolete-plugins/tree/master/cvs">Original CVS source</a></p>
+  ]]></description>
 
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.vcs</depends>
