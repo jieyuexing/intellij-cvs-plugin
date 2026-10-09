@@ -25,7 +25,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.ex.*;
-import com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl;
+import com.intellij.cvsSupport2.util.CvsPathMacros;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -86,7 +86,7 @@ public abstract class SelectLocationStep extends WizardStep {
     myFileSystemTree.updateTree();
 
     myPathTextField = new Vfs(
-      FileChooserFactoryImpl.getMacroMap(), myFileSystemTree,
+      CvsPathMacros.getMacroMap(), myFileSystemTree,
       new LocalFsFinder.FileChooserFilter(myChooserDescriptor, myFileSystemTree.areHiddensShown())) {
       @Override
       protected void onTextChanged(final String newValue) {
