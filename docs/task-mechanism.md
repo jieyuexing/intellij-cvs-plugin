@@ -30,7 +30,7 @@ planet-extensions/task-store/bin/task-store show task-intellij-cvs-i18n-zh-v1
 
 ## 2. 本仓库（GitHub）里程碑清单
 
-人类可读进度放在 `README.md` / `README_ZH.md` 的 Status 列表；  
+人类可读进度放在 `README.md` 的 Status / `README_ZH.md` 的「状态」列表；\
 技术合同在 `AGENTS.md`（P-01 保原码、P-02 解耦、P-03 i18n、P-04 目标 IDE）。
 
 独立 Git 根：`https://github.com/jieyuexing/intellij-cvs-plugin`  

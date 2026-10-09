@@ -1,240 +1,155 @@
-# intellij-cvs-plugin
+# OpenCVS
 
 [English](README.md) | **中文**
 
-IntelliJ **CVS** 集成插件的社区维护 fork，维护者：**jieyuexing**。
+让新版 IntelliJ IDEA 继续使用 CVS 版本控制——JetBrains 已冻结的官方 CVS 插件的社区维护 fork。
 
-**与 OpenBSD 的 OpenCVS 项目及 JetBrains 均无隶属关系。**
+> **与 OpenBSD 的 OpenCVS 项目及 JetBrains 均无隶属关系。**
 
-## 源自（Fork of）
+[JetBrains Marketplace](https://plugins.jetbrains.com/plugin/34911-opencvs)（上架审核中）·
+[Releases](https://github.com/jieyuexing/intellij-cvs-plugin/releases) ·
+[版本记录](#版本记录) ·
+许可证：[Apache 2.0](LICENSE)
 
-上游（JetBrains 原始源码）：
+## 功能
 
-https://github.com/JetBrains/intellij-obsolete-plugins/tree/master/cvs
+- 在 IDE 中检出、更新、提交、比较、查看历史和逐行注解 CVS 工作副本。
+- 支持原插件的连接方式：`pserver`、`ext`、SSH 和本地仓库。
+- 提供英文和中文界面，随 IDE 显示语言自动切换。
+- 相对最后一个官方版本（`223.0`）的修复与增强：
+  - 可安装在 IntelliJ IDEA **2023.2** 至 **2026.2**；
+  - 从磁盘发现 CVS 根目录，2023.2 上首次显示状态不再需要“从磁盘重新加载”；
+  - 大型或嵌套工作副本的仓库与状态扫描更快；
+  - 对因复制而改写时间戳的工作副本提供只读的仓库核对；
+  - 回滚可取消、分批执行，并报告错误；
+  - `~/.cvspass` 以 LF 换行写入，在 IDE 登录后命令行 CVS 仍能正常认证；
+  - 取内容被取消或失败时，不再出现整个文件都算差异的 diff。
 
-官方 Marketplace 列表（已冻结）：
+## 安装
 
-https://plugins.jetbrains.com/plugin/10746-cvs
+插件 id 为 `io.github.jieyuexing.cvs`，与官方插件 `CVS` 不同。安装前请**停用或卸载官方 CVS 插件**，两者注册了相同的操作。
 
-本仓库是 obsolete-plugins 中该目录的独立维护 fork（Apache-2.0）。  
-许可证：[Apache License 2.0](LICENSE)
+### JetBrains Marketplace
 
-## 为什么要 fork
+审核通过后：**Settings → Plugins → Marketplace**，搜索 **OpenCVS**。
 
-JetBrains 已弃用 CVS 支持，把代码迁到 `intellij-obsolete-plugins`，并不再推进 Marketplace 版本。**官方插件不会跟上新版 IntelliJ 平台。** 本项目用新的 plugin id 重新开始社区维护，方便仍在用 CVS 的用户在较新 IDE 上继续工作。
+### GitHub 插件仓库（推荐，最快拿到修复）
 
-## 官方插件状态（JetBrains）
-
-| 项 | 值 |
-| --- | --- |
-| Marketplace | [CVS · plugin 10746](https://plugins.jetbrains.com/plugin/10746-cvs) |
-| Plugin id | `CVS` |
-| **最后发布** | **`223.0`**（Marketplace update id 268690） |
-| **兼容范围** | **build `203.1` — `221.*`** |
-| **IntelliJ IDEA** | **`2020.3` — `2022.1.4`** |
-| 大致发布时间 | 2022-12（Marketplace `cdate`） |
-| 官方姿态 | 已弃用 / as-is；源码在 obsolete-plugins |
-
-**含义：** 官方线实质上**永久停在 223.0**，**不覆盖** IDEA 2022.2+（build `222.*` 及之后）。新工作只发生在本社区 fork（或其他 fork），而不是 plugin 10746。
-
-## 时间线
-
-| 时间 | 事件 |
-| --- | --- |
-| 2019 以前 | CVS 在 IntelliJ IDEA 主源码树中，随 IDE 发布。 |
-| 2019.2+ | 大量少用插件（含 CVS）迁出主仓，进入 [intellij-obsolete-plugins](https://github.com/JetBrains/intellij-obsolete-plugins)。 |
-| 2020-11 | JetBrains 发布 [CVS integration deprecation](https://blog.jetbrains.com/idea/2020/11/cvs-integration-deprecation)；CVS 不再是产品优先级。 |
-| 约 2020.3 – 2022.1 | 官方 Marketplace 包仍可在该窗口内的 IDEA 上安装（223.0 的 `since`/`until`）。 |
-| **2022-12** | 官方 Marketplace 发布 **`223.0`** —— **已知最后一版 JetBrains 线**。兼容上限 **`221.*` / IDEA 2022.1.4**。 |
-| 2023+ | 平台继续前进（`222`、`223`、`231`…）。官方 CVS 停在 223.0；更新 IDE 在声明兼容范围内无法使用。 |
-| **2026-07** | 本 fork 启动：源码取自 obsolete-plugins/cvs，新 id `io.github.jieyuexing.cvs`，vendor `jieyuexing`，版本 **`262.0`** 与 IDEA **2026.2**（平台 `262`）对齐。 |
-
-```text
-  IDE 内置 / 主源码树              obsolete-plugins + Marketplace
-  ─────────────────────►│◄──────────────────────────────────────
-                        │
-                     2019.2+
-                        │
-                 弃用说明博客（2020-11）
-                        │
-              官方 223.0 冻结（≈2022-12）
-              203.1 ──────── 221.* / 2022.1.4
-                        │
-                        ▼
-              社区 fork 重新维护（2026-07 →）
-              早期仅覆盖维护者实际使用的 IDE 版本
-```
-
-## 维护策略（早期）
-
-这是一次**重启**，不是「全版本长期支持」的承诺。
-
-| 规则 | 含义 |
-| --- | --- |
-| 官方线仅作历史 | 不要指望 JetBrains 再发超过 223.0 / 2022.1.4 的版本。 |
-| 新 id；版本对齐 IDEA 平台线 | Plugin id 为 `io.github.jieyuexing.cvs`。**版本主号与 IDEA 平台线一致**（官方最后 `223.0` = 2022.3；本 fork **`262.0`** = 2026.2）。 |
-| **维护者优先目标** | 早期只优先**维护者本人实际使用的** IntelliJ / 平台版本：构建、冒烟、修 bug。 |
-| 其它版本欢迎但不保证 | 其它 IDE 版本的 Issue / PR 欢迎；可能要等维护者能跑到该版本，或由贡献者负责验证。 |
-| 不宣称「支持全部最新 IDEA」 | 兼容性以当前 `sinceBuild` / `untilBuild` 与下表为准，不多写。 |
-
-### 目标 IDE 版本（活表）
-
-版本采纳或淘汰时更新本表。  
-维护者机器当前只跑下面两行 **Active**。
-
-| 优先级 | IDE / 平台 | 大致 build 线 | 状态 | 说明 |
-| --- | --- | --- | --- | --- |
-| 基线（上游最后） | IDEA `2020.3` – `2022.1.4` | `203` – `221` | 历史（官方 223.0） | 仅作对照；不是本 fork 主线 |
-| 源码树默认 | obsolete-plugins 片段 | `2022.3` / `223` | 未验证 | Gradle 尚未独立；不是维护者安装目标 |
-| **Active（主）** | **IntelliJ IDEA `2026.2.1`** | **`262.*`** | **支持** | 编译 classpath；安装范围含 262 |
-| **Active（次）** | **IntelliJ IDEA `2023.2.8`** | **`232.*`** | **支持（可安装）** | `sinceBuild=232`；Java 17 字节码供 IU-232 加载 |
-| 暂不覆盖 | 其它 IDE 版本 | — | 尽力 / 以后 | 未写入 Active 前不作承诺 |
-
-**早期构建策略**
-
-1. ~~为 **2026.2.1** 接独立 Gradle~~ — **已完成**（见 [docs/platform-2026.2-notes.md](docs/platform-2026.2-notes.md)）。  
-2. 在 **2026.2.1** 上把 `compileJava` / `buildPlugin` 做绿（最小 API 适配）。  
-3. 安装冒烟 **2026.2.1**，再 **2023.2.8**。  
-4. 两边都通后再放宽 `since`/`until`。官方 `223.0` 范围仅作历史。
-
-## 身份（维护者 = jieyuexing）
-
-| 字段 | 值 |
-| --- | --- |
-| Plugin ID | `io.github.jieyuexing.cvs` |
-| 显示名 | OpenCVS |
-| Vendor | `jieyuexing` |
-| Vendor URL | https://github.com/jieyuexing |
-| Group | `io.github.jieyuexing` |
-| 上游 plugin id（JetBrains） | `CVS` |
-| 上游 Marketplace | [10746-cvs](https://plugins.jetbrains.com/plugin/10746-cvs) 最后 **223.0** |
-
-本 fork 的 **plugin id 与官方 `CVS` 不同**，不会替换或冲突官方 Marketplace 列表。若两套都装，请卸掉官方 CVS 插件。
-
-## Agent / 协作者合同
-
-工作规则见 **[AGENTS.md](AGENTS.md)**：
-
-1. **默认尽量保持原有代码**（最小 diff；保留 CVS 协议与包布局）。  
-2. **在此基础上解耦增强**（构建、平台适配、可测试性）——禁止无验收大翻。  
-3. **用户可见 label 全球化**：当前英文基线 + 中文（`en` + `zh`）。
-
-人类可读文档：
-
-| 语言 | 文件 |
-| --- | --- |
-| English | [README.md](README.md) |
-| 中文 | [README_ZH.md](README_ZH.md)（本文件） |
-
-## 状态
-
-早期 fork 搭建：
-
-- [x] 从归档复制源码  
-- [x] Fork 身份（id / vendor / description）  
-- [x] 文档：官方冻结（223.0 / 2020.3–2022.1.4）与重启时间线  
-- [x] `AGENTS.md`（保原码 / 解耦 / en+zh 文案）  
-- [x] 维护者目标：IDEA **2026.2.1**（主）、**2023.2.8**（次）  
-- [x] 中文 README（本文件）  
-- [x] 独立 Gradle（Platform Plugin 2.18.1、Java 25、`since`/`until` = `232` / `262.*`）
-- [x] **2026.2.1** 上 `compileJava` 变绿  
-- [x] `buildPlugin` 变绿（初版发布版本 **262.0**：since **232** … until **262.***，Java 17，含中文 Bundle）
-- [x] `CvsBundle_zh` 及兄弟 bundle；随 IDEA 界面语言自动切换（`DynamicBundle`）
-- [x] Task 机制：[docs/task-mechanism.md](docs/task-mechanism.md) + harness Task `task-intellij-cvs-i18n-zh-v1`
-- [x] Rust 性能[路线图](docs/rust-performance-roadmap.md)已落盘，当前仅规划且受基准门约束
-- [ ] Rust Phase 0 Java 基线/profiling 与显式 go/no-go 决策
-- [ ] **2026.2.1** 安装冒烟（中文 UI 下安装 262.0 Release Candidate zip）
-- [x] **2023.2.8** 安装/根发现冒烟
-- [ ] 在 **2023.2.8** 与 **2026.2.1** 做大目录回滚冒烟：验证按精确修订批量恢复、Cancel 可见、部分取消后可恢复，且不残留 `.#文件.修订号`
-- [ ] 可选：社区 Marketplace 发布
-
-## 构建（2026.2.1）
-
-```bash
-# 使用 IDEA 2026.2.1 自带的 JBR 25
-export JAVA_HOME="$HOME/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Home"
-python3 scripts/check_i18n_keys.py
-python3 scripts/check_rust_roadmap.py
-./gradlew buildPlugin
-# 产物: build/distributions/intellij-cvs-plugin-262.0.2.zip
-```
-
-**版本约定：** 主号对齐 IDEA **2026.2** 平台线（`262.x`）。  
-**安装范围：** `since-build=232` … `until-build=262.*`（IDEA **2023.2**～**2026.2**）。  
-**262.0 是社区版初次发布。** 下列改进均在首个公开版发布前完成：
-
-- 兼容 IU-232 安装，并输出 Java 17 字节码（避免 2023.2.8 报「需要 262」或类版本过高）。
-
-- 优化仓库/状态扫描与错误处理；Rust 仍只是规划中的可选未来 fast path。
-
-- 修复 IDEA 232 中“一个 CVS 映射目录包含多个嵌套工作副本”时的状态刷新；容器路径不再被整体误报为未版本管理目录。
-
-- 当 IDEA 232 尚未把被忽略的 `CVS` 管理目录装入 VFS 时，改由磁盘发现 CVS 根；初始状态不再依赖“从磁盘重新加载”。
-
-- 为复制/解压后时间戳失效的 CVS 工作副本增加显式的离线内容基线。它避免逐文件连接仓库，也不会把启发式判断偷偷当作事实。
-
-- 工作文件与缓存内容相同时，回滚不再重复写盘；缓存、`CVS/Entries` 与权限错误统一交给 IDEA 回滚错误列表。缺少本地基线时，立即离开 IDEA 232 不可取消的通用回滚区间，再由插件自己的可取消后台任务恢复；文件按 `CVS/Entries` 中的精确修订分组，以批量 clean update 取代逐文件 checkout 连接循环。取消时也会执行部分结果收尾，原始 Entries 按目录一次性校正，VFS 父目录刷新会去重。
-
-- 分离“映射容器用于发现”与“CVS 根拥有状态”两种职责。启动后以可取消后台任务直接从磁盘发现工作副本，只定点刷新这些根并触发首次 Changes 扫描；确认根之外的路径不再显示为未版本管理。
-
-- 在 IDEA 232 中把显式标脏的工作副本根目录视为其自身脏范围的一部分，修复冷启动发现全部根后仍被逐个判定为越界、必须刷新某个子目录才加载列表的问题。
-
-- 把显式递归标脏的根视为对整棵子树的授权。IDEA 232 对自定义根转换器生成的根及其后代不能稳定返回 scope 归属；逐层重复判断会让首次状态收集停在第一层目录。
-
-- 根发现完成后递归标脏原始配置映射容器，再由 ChangeProvider 把该 scope 路由到发现的 CVS 根。这样 IDEA 232 的 Provider 与 `ChangelistBuilder` 使用同一个 scope 锚点；此前 Provider 已找到深层更改，但平台会在刷新“更改”视图前静默丢弃。
-
-- 为仅由时间戳导致的含糊状态增加显式、可取消、只读的仓库验证。只有完整 `cvs -n update` 未报告、且工作文件与 `CVS/Entries` 在验证期间保持稳定的候选文件才会缓存为内容相同；登录、网络、取消、警告或并发文件变化都会保留原有基线。
-
-- 在扫描前折叠重叠的递归 dirty 路径（配置映射容器、转换后的 CVS 根及显式后代）。每次刷新中，每个 CVS 子树和显式文件最多向 Changes 模型提交一次。
-
-- 先把服务器报告路径建立为哈希集合，再沿候选文件的父路径回溯匹配。仓库验证结果匹配由“候选数乘报告数”降为“候选数乘路径深度”。
-
-### 大量“内容相同”的更改
-
-CVS 通常只在 `CVS/Entries` 中保存修订号和检出时间，并不像 Git 那样始终保留可供本地比较的完整索引。复制工作副本如果重写了文件时间戳，CVS 就会把内容未变的文件也保守地视为修改。
-
-安全的默认操作是：**VCS → CVS → 使用 CVS 仓库验证本地内容...**。插件使用 IDEA 已配置的 CVS 登录执行只读模拟更新，只为服务器未报告且验证期间保持稳定的时间戳候选文件保存 SHA-256。工作文件、`CVS/Entries` 与仓库都不会被修改；登录/网络错误、警告、取消或并发变化都不会更新缓存。
-
-原有 **信任当前内容并建立本地基线...** 仍作为显式离线兜底，但在缺少 `BaseRevisions` 时也会接受既存本地修改。与现有 `CVS/BaseRevisions` 不同的文件始终保留为更改。需要恢复 CVS 的保守行为时，执行 **清除本地内容基线...**。
-
-### IDEA 2023.2 在 macOS 上回滚时原生崩溃
-
-IDEA 2023.2.8 自带 JBR 17.0.12。展开项很多的“更改”树可能触发 JetBrains Runtime 问题 [JBR-7659](https://youtrack.jetbrains.com/issue/JBR-7659)：macOS 可访问性桥接递归发送树节点展开事件，最终由 macOS 以 `Too many nested CFRunLoopRuns` 终止 IDE。这是运行时原生崩溃，不是 CVS 插件抛出的 Java 异常。初版已移除可避免的文件写入与嵌套 CVS UI，并把需要仓库数据的回滚移到独立可取消后台任务，但插件无法替换 IDE 运行时。
-
-如果不需要 VoiceOver/IDE 无障碍功能，可按 JetBrains 的规避建议，在 **帮助 → 编辑自定义 VM 选项** 中加入 `-Dsun.awt.mac.a11y.enabled=false`，然后重启 IDEA。需要 VoiceOver 时不要使用该参数；它会关闭 IDE 的可访问性桥接，也可能影响依赖该接口的窗口管理工具。此时应使用包含运行时修复的新版 IDE/JBR，并在执行一次性基线刷新前先折叠庞大的“更改”树。
-
-**多语言：** 英文基线 + `*_zh.properties`。IDEA 界面语言为中文时，文案自动切换（无需插件内开关）。
-
-安装：设置 → 插件 → ⚙️ → 从磁盘安装插件… → 选 zip → 重启。  
-细节见[平台说明](docs/platform-2026.2-notes.md) · [Rust 路线图](docs/rust-performance-roadmap.md) · [任务机制](docs/task-mechanism.md)。
-
-## 在线更新
-
-维护者完成发版后，在 **设置 → 插件 → ⚙ → 管理插件仓库 → +** 添加以下自定义仓库：
+在 **Settings → Plugins → ⚙ → Manage Plugin Repositories → +** 中添加：
 
 ```text
 https://raw.githubusercontent.com/jieyuexing/intellij-cvs-plugin/main/updatePlugins.xml
 ```
 
-确认对话框后，在 **设置 → 插件 → 已安装** 中检查插件更新，安装 **OpenCVS** 更新，并按提示重启。IDEA **2023.2** 与 **2026.2** 使用同一地址（build `232` 至 `262.*`），对应本 fork 的插件 ID `io.github.jieyuexing.cvs`。配置一次后，后续已发布版本可直接在 IDE 中更新，无需每次从磁盘选择 ZIP。
+之后新版本会和其他插件一样出现在 **Settings → Plugins → Installed** 的更新中。Marketplace 的版本要经过 JetBrains 审核，可能晚于 GitHub 发布；两个渠道使用相同的签名 ZIP 和版本号。
 
-版本 **262.0.1** 包含 passfile 固定 LF 换行修复。更新元数据不代表运行时兼容性已验收，上文的冒烟测试边界仍有效。维护者的准备命令、授权与先资产后索引的发布顺序见[发版合同](docs/release.md)。
+### 手动安装
 
-## 目录结构
+从 [Releases](https://github.com/jieyuexing/intellij-cvs-plugin/releases) 下载 `intellij-cvs-plugin-<version>.zip`，然后 **Settings → Plugins → ⚙ → Install Plugin from Disk…**，安装后重启。
 
-| 路径 | 角色 |
+`262.0.2` 起的版本使用自签名证书签名（[docs/signing-cert.pem](docs/signing-cert.pem)）。不经 Marketplace 安装时，IDE 可能提示签名者不受信任。
+
+## 兼容性
+
+安装范围：build `232` – `262.*`（IntelliJ IDEA 2023.2 – 2026.2）。版本号跟随 IDEA 版本线：`262.x` 基于 IDEA 2026.2 构建。
+
+### 目标 IDE 版本
+
+只有 **Active** 行由维护者构建和测试；安装范围内的其他版本尽力支持。
+
+| 优先级 | IDE | 版本线 | 状态 |
+| --- | --- | --- | --- |
+| **Active（主）** | IntelliJ IDEA 2026.2.x | `262.*` | 支持；编译目标 |
+| **Active（次）** | IntelliJ IDEA 2023.2.8 | `232.*` | 支持；Java 17 字节码 |
+| 历史 | IntelliJ IDEA 2020.3 – 2022.1.4 | `203` – `221` | 请使用官方插件 `223.0` |
+| 其他 | — | — | 加入 Active 前不作保证 |
+
+## 常见问题
+
+### 大量“内容相同”的改动
+
+CVS 在 `CVS/Entries` 中只记录版本号和检出时间戳，不保留完整的本地比较索引。复制工作副本时如果改写了文件时间戳，CVS 只能保守地把未改动的文件报告为已修改。
+
+使用 **VCS → CVS → 使用 CVS 仓库验证本地内容...**（Verify Local Contents with CVS Repository）。它用已配置的 CVS 登录执行一次只读的 dry-run 更新，只为时间戳不一致、服务器未报告且核对期间保持稳定的文件记录 SHA-256。工作文件、`CVS/Entries` 和仓库都不会被修改；出错、警告、取消或并发改动时缓存保持不变。
+
+**信任当前内容并建立本地基线...**（Trust Current Contents and Build Local Baseline）仍作为离线兜底保留，但在 `CVS/BaseRevisions` 不可用时也会接受已有的本地修改。**清除本地内容基线...**（Clear Local Content Baseline）可恢复保守状态。
+
+### diff 把整个文件都标为改动
+
+已在 `262.0.3` 修复。旧版本在取内容被取消时可能缓存空的基准版本。升级即可：`CVS/BaseRevisions/` 下的 0 字节文件现在会被忽略并重新获取。
+
+### 在 IDE 中登录后，命令行 `cvs` 报 “authorization failed”
+
+已在 `262.0.1` 修复。旧版本按 IDE 默认换行符重写 `~/.cvspass`；换行为 CRLF 时，GNU CVS 会发送错误的口令。把该文件改回 LF（权限 `0600`），或升级后重新登录。
+
+### macOS 上 IDEA 2023.2 回滚时崩溃
+
+IDEA 2023.2.8 自带 JBR 17.0.12。展开很大的 Changes 树可能触发 [JBR-7659](https://youtrack.jetbrains.com/issue/JBR-7659)：macOS 辅助功能桥递归发送树展开事件，系统以 `Too many nested CFRunLoopRuns` 终止 IDE。这是运行时故障，不是插件异常；依赖仓库的回滚已放在独立的可取消后台任务中执行。
+
+如果不需要 VoiceOver 和 IDE 辅助功能，可在 **Help → Edit Custom VM Options** 中加入 `-Dsun.awt.mac.a11y.enabled=false` 后重启。否则请使用更新的 IDE/JBR，并在刷新前折叠大的 Changes 树。
+
+## 版本记录
+
+| 版本 | 日期 | 变更 |
+| --- | --- | --- |
+| `262.0.3` | 2026-10-09 | 取内容被取消或失败时不再缓存空的 diff 基准；忽略并刷新 0 字节的 `CVS/BaseRevisions` 缓存。 |
+| `262.0.2` | 2026-10-09 | 更名为 OpenCVS；原创图标；GitHub 与 Marketplace 共用签名发行包。 |
+| `262.0.1` | 2026-10-09 | `~/.cvspass` 始终以 LF 换行写入。 |
+| `262.0` | 2026-08-03 | 首个社区版本：安装范围 232–262.*、Java 17 字节码、从磁盘发现根目录、更快的状态扫描、仓库核对与本地内容基线、可取消的分批回滚、中文界面。 |
+
+## 背景
+
+JetBrains 在 2019.2 把 CVS 移出 IntelliJ IDEA 主仓库，2020-11 [宣布弃用](https://blog.jetbrains.com/idea/2020/11/cvs-integration-deprecation)，源码保留在 [intellij-obsolete-plugins](https://github.com/JetBrains/intellij-obsolete-plugins/tree/master/cvs)。官方 Marketplace 插件（[10746-cvs](https://plugins.jetbrains.com/plugin/10746-cvs)，id `CVS`）冻结在 **`223.0`**（约 2022-12 发布），兼容 build `203.1` – `221.*`（IntelliJ IDEA 2020.3 – 2022.1.4），按现状提供。
+
+| 时间 | 事件 |
 | --- | --- |
-| `cvs-core/` | 核心 CVS 客户端 / UI 支撑代码 |
-| `cvs-plugin/` | IntelliJ 插件源码 + `META-INF/plugin.xml` |
+| 2019.2 之前 | CVS 随 IntelliJ IDEA 一起发布。 |
+| 2019.2 | 移入 `intellij-obsolete-plugins`。 |
+| 2020-11 | 宣布弃用。 |
+| 约 2022-12 | 最后的官方版本 `223.0`；更新的 IDE 不在其兼容范围内。 |
+| 2026-07 | 本 fork 以 obsolete-plugins 源码起步，使用新 id、vendor `jieyuexing`、版本 `262.0`。 |
+| 2026-10 | 更名为 OpenCVS；建立 GitHub 更新渠道并提交 Marketplace。 |
+
+## 维护策略
+
+- 这是社区重启维护，不承诺支持每一个 IDE 版本。
+- 维护者优先保证 **Active** 行中的 IDE 版本；欢迎针对其他版本的 issue 和 PR，但可能要等到能够验证时才处理。
+- 默认保留原有代码和 CVS 行为，改动保持最小、可回退。协作规则见 [AGENTS.md](AGENTS.md)。
+
+## 状态
+
+- [x] 独立 Gradle 构建（IntelliJ Platform Gradle Plugin 2.18.1、JBR 25），安装范围 `232` – `262.*`
+- [x] 在 IDEA 2023.2.8 与 2026.2 上完成安装与根目录发现冒烟验证
+- [x] 中文界面资源随 IDE 语言切换
+- [x] GitHub 更新渠道与签名发行
+- [ ] JetBrains Marketplace 审核通过——首次审核要求移除 Plugin Verifier 在 2026.2 上报告的内部 API 使用
+- [ ] 2023.2.8 与 2026.2 上的大目录回滚冒烟（分批恢复、可见的取消、部分取消后的恢复、不残留 `.#file.revision`）
+- [ ] Rust 第 0 阶段：Java 基线 profiling 与是否推进的决定（[路线图](docs/rust-performance-roadmap.md)；仅规划）
+
+## 开发
+
+```bash
+# 使用 IntelliJ IDEA 2026.2 自带的 JBR 25
+export JAVA_HOME="$HOME/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Home"
+python3 scripts/check_i18n_keys.py
+python3 scripts/check_rust_roadmap.py
+./gradlew buildPlugin            # build/distributions/intellij-cvs-plugin-<version>.zip
+./gradlew verifyPlugin           # 用 Plugin Verifier 检查 IDEA 2026.2 与 2023.2.8
+```
+
+发版通过 `scripts/release.py prepare|publish` 完成；签名、GitHub 更新渠道和 Marketplace 上传见 [docs/release.md](docs/release.md)。平台说明：[docs/platform-2026.2-notes.md](docs/platform-2026.2-notes.md) · 任务边界：[docs/task-mechanism.md](docs/task-mechanism.md)。
+
+| 路径 | 作用 |
+| --- | --- |
+| `cvs-plugin/` | 插件源码与 `META-INF/plugin.xml` |
+| `cvs-core/` | CVS 客户端核心与界面支持 |
 | `javacvs-src/` | JavaCVS 库源码 |
-| `smartcvs-src/` | SmartCVS 相关源码 |
-| `trilead-ssh2-build213/` | 捆绑的 SSH 库源码 |
-| `lib/` | 预编译 jar（如 trilead） |
+| `smartcvs-src/` | 源自 SmartCVS 的代码 |
+| `trilead-ssh2-build213/`、`lib/` | SSH 库源码与预编译 jar |
 | `testSource/` | 测试 |
-| `docs/` | 平台说明、任务边界与未来性能路线图 |
+| `scripts/` | 检查、发版与签名工具 |
+| `docs/` | 平台说明、发版合同、路线图 |
 
 ## 许可证
 
-Apache License 2.0。出处见 [LICENSE](LICENSE) 与 [SOURCE.txt](SOURCE.txt)。
-
-版本 **262.0.2** 使用 **OpenCVS** 名称和原创图标。GitHub 与 Marketplace 使用同一份签名 ZIP；Marketplace 是否可用仍取决于审核。签名及发布方式见[发版合同](docs/release.md)。
+插件采用 [Apache License 2.0](LICENSE)，与上游 JetBrains 源码一致。随附组件保留各自许可证：JavaCVS 使用 Sun Public License（[javacvs-src/sun-public-license.txt](javacvs-src/sun-public-license.txt)），Trilead SSH-2 使用 BSD 类许可证（[trilead-ssh2-build213/LICENSE.txt](trilead-ssh2-build213/LICENSE.txt)）。来源说明见 [SOURCE.txt](SOURCE.txt)。
