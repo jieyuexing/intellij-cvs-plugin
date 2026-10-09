@@ -120,6 +120,21 @@ python3 -B scripts/test_release.py
 ./gradlew --no-daemon --console=plain verifyPlugin
 ```
 
-Verifier 固定本机 IDEA 2026.2 与下载 IDEA 2023.2.8；不删除目标绕过错误。报告须区分 compatibility problems、internal API、deprecated/experimental 与环境错误。详细结果由本轮执行记录持有。
+Verifier 固定本机 IDEA 2026.2、下载 IDEA 2023.2.8 与中间版本 IDEA 2024.3.6；
+加 `-PverifyCrossProduct=true` 同时调查 WebStorm 2026.2。目标已缓存时可加 `--offline`，
+避免远端元数据 TLS 故障；仍须区分依赖无法解析和完成扫描。不删除目标绕过错误。报告须区分 compatibility problems、internal API、deprecated/experimental 与环境错误。详细结果由本轮执行记录持有。
 
 来源：[签名文档](https://plugins.jetbrains.com/docs/intellij/plugin-signing.html)、[发布文档](https://plugins.jetbrains.com/docs/intellij/publishing-plugin.html)、[审核准则](https://plugins.jetbrains.com/docs/marketplace/approval-guidelines.html)。
+
+
+### 2026-10-09：扩大兼容性调查
+
+原描述符在 IU-232.10335.12、IU-243.26574.91、IU-262.10968.63、
+WS-262.8665.259 上的 compatibility problems 均为 0；Internal API 分别为
+0、20、23、23，每个目标另有 1 条历史包名 warning。首次在线执行因远端元数据
+TLS 握手失败；缓存目标后 `verifyPlugin --offline -PverifyCrossProduct=true`
+完成扫描，exit 1 的原因是 Internal API。
+
+这没有复现 Marketplace 页面所称的兼容性问题，也没有证明所有声明产品均兼容。
+因此暂不增加无行为需要的 IDEA/Java 依赖，不缩窄安装产品；待取得页面的具体
+IDE build 与问题条目再精确复现。原始报告由本轮任务 RECORD 持有。
