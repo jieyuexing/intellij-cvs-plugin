@@ -1,10 +1,10 @@
 # 自定义插件仓库发版合同
 
-入口：`python3 scripts/release.py prepare|publish --receipt <仓外任务目录/prepare.json>`。仅依赖 Python 3.9+ 标准库；构建仍使用本仓 Gradle、IDEA 2026.2 与 JBR 25，见 [平台合同](platform-2026.2-notes.md)。只有维护者或获得用户明确 push / 发版授权的协调者可以运行 `publish`；准备、fixture 或构建通过不授予发布权限。脚本不安装插件、不修改 IDEA 设置、不发布 Marketplace。
+入口：`python3 scripts/release.py prepare|publish --receipt <仓外任务目录/prepare.json>`。仅依赖 Python 3.9+ 标准库；构建仍使用本仓 Gradle、IDEA 2026.2 与 JBR 25，见 [平台合同](platform-2026.2-notes.md)。只有维护者或获得用户明确 push / 发版授权的协调者可以运行 `publish`；准备、fixture 或构建通过不授予发布权限。脚本不安装插件、不修改 IDEA 设置；Marketplace 更新使用单独的显式发布入口。
 
 ## 身份与版本
 
-- 插件 ID：`io.github.jieyuexing.cvs`；名称：`CVS (Community)`。
+- 插件 ID：`io.github.jieyuexing.cvs`；名称：`OpenCVS`。
 - 版本来自 `gradle.properties`，tag 与版本相同；zip 为 `build/distributions/intellij-cvs-plugin-<version>.zip`。
 - 当前安装范围仍为 `232` 至 `262.*`；不得为了通过校验修改兼容范围。
 - 版本/tag 只接受无前导零的点分数字稳定版，例如 `262.0.1`。逐段数字比较、缺段补零，与 IntelliJ `VersionComparatorUtil` 的该子集一致；`262.0.0` 与 `262.0` 等价。非数字 tag 不静默忽略，而是停止要求维护者核对。
@@ -65,3 +65,54 @@ python3 -B scripts/release.py publish --receipt "$TMPDIR/prepare.json"
 离线测试只证明校验和顺序控制；真实 GitHub 发布、CDN、IDEA 2023.2/2026.2 的更新发现与安装须分别验收。
 
 参考：[JetBrains 自定义插件仓库格式](https://plugins.jetbrains.com/docs/intellij/custom-plugin-repository.html)、[IntelliJ 版本比较实现](https://github.com/JetBrains/intellij-community/blob/master/platform/util-rt/src/com/intellij/util/text/VersionComparatorUtil.java)。
+
+## 262.0.2：签名与 Marketplace
+
+显示名为 **OpenCVS**，与 OpenBSD 的 OpenCVS 项目及 JetBrains 均无隶属关系。名称与 OpenBSD 项目相同，Marketplace 准则 1.2a/1.2c 审核可能要求改名；声明不能保证通过审核。插件 id 与 vendor 保持不变。
+
+### 初始化和保管
+
+获得初始化授权后，在本仓根、已设置 0700 `TMPDIR` 的环境运行 `python3 -B scripts/setup_signing.py`。脚本拒绝既有私钥、证书或三个历史签名条目；不覆盖、不自动轮换。生成 RSA 4096、AES-256-CBC 加密的 PKCS#8 私钥，自签 SHA-256 证书有效期 3650 天。
+
+- 私钥：`~/Library/Application Support/intellij-cvs-plugin/signing/private-key.pem`，目录 0700、文件 0600，由本人拥有，路径不得含 symlink。
+- 口令：登录钥匙串 `intellij-cvs-plugin-signing-password`，随机生成，写后回读验证；不存仓库，不进入 argv 或日志。
+- 公共证书：[signing-cert.pem](signing-cert.pem)，可公开提交。证书不是秘密。
+
+私钥文件与口令应分开加密备份，并离线验证恢复能力。不要把口令放在私钥旁边；仅备份私钥无法在丢失口令后恢复。轮换需维护者明确授权：先保留旧密钥和证书供历史版本验证，再将旧材料移至受保护备份、移除原条目，重新初始化并提交新证书；联系 Marketplace 支持确认更新签名身份的要求。密钥或口令丢失无法恢复时只能生成新身份并协调信任更新；泄露时立即停止发布并联系 Marketplace 支持。脚本中途失败清理本次文件；钥匙串拒绝/超时后不再访问，明确报告可能残留条目，交维护者处理。删除文件不宣称 APFS/SSD 物理擦除。
+
+Gradle `signing` 使用 `privateKeyFile`、`certificateChainFile` 和环境变量 `OPENCVS_SIGNING_PASSWORD`。2.18.1 默认任务会把口令传入 Java argv，因此本仓替换 `signPlugin` 执行动作，由 `scripts/SigningBridge.java` 在子 JVM 中读取环境变量，再在内存中调用官方 ZIP Signer。不要启用 Gradle debug、build scan 或 configuration cache 记录秘密；release 入口禁用持久 daemon/configuration cache，并抑制或脱敏秘密输出。
+
+`prepare` 先检查私钥权限、证书和钥匙串口令，然后运行既有检查/构建、`signPlugin`、`verifyPluginSignature`。任何缺失或验签失败都停止，不生成 XML/回执。最终签名 ZIP 复制为原渠道约定的 `build/distributions/intellij-cvs-plugin-<version>.zip`；`-signed.zip` 是同字节中间产物，发布入口锁定前者。schema 2 回执记录最终签名 ZIP 哈希；旧 schema 1 回执不能发布。GitHub `publish` 也重新验签。
+
+### 首次网页上传（用户本人执行）
+
+1. 登录 JetBrains Marketplace 账号，确认维护者资料、可用的 vendor URL 和邮箱 `jieyuexing@outlook.com`，阅读并接受 Developer Agreement。
+2. 按实际情况填写 trader/non-trader 身份和要求的联系方式。
+3. 新建插件页面，上传 prepare 回执锁定的 **262.0.2 签名 ZIP**，核对 id `io.github.jieyuexing.cvs`、名称 OpenCVS、版本、232–262.* 安装范围及图标。
+4. 填写源码 `https://github.com/jieyuexing/intellij-cvs-plugin`、Apache-2.0 许可证/EULA（仓库 LICENSE），保留上游版权和非官方/无隶属关系声明。
+5. 检查英文描述、change-notes 和联系资料。每次上传均有 Verifier 与人工审核；内部 API、兼容性问题、名称冲突可能阻断，不保证审核时长或通过。
+6. 保存页面 URL 与审核结果；首次网页上传完成后才使用后续自动更新入口。本轮不执行上传或安装。
+
+### 后续 Marketplace 更新（另行授权）
+
+由用户自己写入 token，避免把 token 放在 shell 命令行或历史中；以下命令形态的 `-w` 省略值，由 macOS 提示输入（先确认默认钥匙串为登录钥匙串）：
+
+```bash
+security add-generic-password -a intellij-cvs-plugin -s jetbrains-marketplace-token -w
+python3 -B scripts/release.py marketplace --first-upload-completed --receipt "$TMPDIR/prepare.json"
+```
+
+首次写入令牌可在 Keychain Access 中完成，勿使用含实际 token 的 `-w <token>` 命令。入口检查干净 main、版本/XML 提交关系、回执/ZIP/XML 哈希与签名，再从登录钥匙串读取 `jetbrains-marketplace-token`，只注入 `publishPlugin` 子进程。Gradle 上传任务不重新构建或签名，并再次核对 ZIP SHA-256；令牌缺失明确失败。上传失败不自动重试，先在网页核对服务端状态。`--first-upload-completed` 是操作者对既有网页上传的明确声明，不会替你上传第一版。
+
+两个渠道使用同一个 id、相同版本及同一份签名 ZIP。建议先按 GitHub 资产→更新 XML 的合同发布，再提交同版本 Marketplace 审核；审核期间两个渠道可暂时不同步，不为绕过审核反复修改同版本资产。自签证书在自定义仓库不自动成为 IDE 信任根，用户可能仍需核对并信任公开证书；签名验证成功不证明安装/运行时验收。
+
+### 本地验证入口
+
+```bash
+python3 -B scripts/test_release.py
+./gradlew --no-daemon --console=plain verifyPlugin
+```
+
+Verifier 固定本机 IDEA 2026.2 与下载 IDEA 2023.2.8；不删除目标绕过错误。报告须区分 compatibility problems、internal API、deprecated/experimental 与环境错误。详细结果由本轮执行记录持有。
+
+来源：[签名文档](https://plugins.jetbrains.com/docs/intellij/plugin-signing.html)、[发布文档](https://plugins.jetbrains.com/docs/intellij/publishing-plugin.html)、[审核准则](https://plugins.jetbrains.com/docs/marketplace/approval-guidelines.html)。

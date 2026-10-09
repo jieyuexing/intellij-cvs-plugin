@@ -1,3 +1,5 @@
+import java.security.MessageDigest
+
 // Maintainer: jieyuexing
 // Fork of: https://github.com/JetBrains/intellij-obsolete-plugins/tree/master/cvs
 //
@@ -67,6 +69,9 @@ dependencies {
             )
         }
 
+        pluginVerifier()
+        zipSigner()
+
         bundledModule("intellij.platform.vcs.impl")
         bundledModule("intellij.platform.vcs.impl.lang")
         bundledLibrary("lib/intellij.libraries.microba.jar")
@@ -84,10 +89,26 @@ java {
 intellijPlatform {
     buildSearchableOptions = false
 
+    // 明确检查两代维护目标，不自动扩大到其他 IDE。
+    pluginVerification {
+        ides {
+            local(file("${System.getProperty("user.home")}/Applications/IntelliJ IDEA.app"))
+            create("IU", "2023.2.8")
+        }
+    }
+
     pluginConfiguration {
         id = "io.github.jieyuexing.cvs"
-        name = "CVS (Community)"
+        name = "OpenCVS"
         version = providers.gradleProperty("pluginVersion")
+        changeNotes = """
+            <p><b>262.0.2</b></p>
+            <ul>
+              <li>Rename the community fork to OpenCVS while keeping its plugin ID.</li>
+              <li>Add original light and dark revision-branch icons and clarify the description.</li>
+              <li>Prepare signed distributions shared by GitHub and JetBrains Marketplace.</li>
+            </ul>
+        """.trimIndent()
 
         ideaVersion {
             // Allow install on maintainer secondary IDE (232) through primary (262).
@@ -107,4 +128,52 @@ tasks {
     named<Test>("test") {
         enabled = false
     }
+}
+
+// 2.18.1 默认任务把 password 放入 Java argv；替换执行动作并保持官方文件接口。
+intellijPlatform {
+    signing {
+        privateKeyFile = file("${System.getProperty("user.home")}/Library/Application Support/intellij-cvs-plugin/signing/private-key.pem")
+        certificateChainFile = layout.projectDirectory.file("docs/signing-cert.pem")
+        password = providers.environmentVariable("OPENCVS_SIGNING_PASSWORD")
+    }
+    publishing {
+        token = providers.environmentVariable("ORG_GRADLE_PROJECT_intellijPlatformPublishingToken")
+    }
+}
+tasks.named<org.jetbrains.intellij.platform.gradle.tasks.SignPluginTask>("signPlugin") {
+    actions.clear()
+    outputs.upToDateWhen { false }
+    doLast {
+        val signer = zipSignerExecutable.get().asFile
+        providers.exec {
+            commandLine(
+                "${System.getProperty("java.home")}/bin/java", "-cp", signer.absolutePath,
+                file("scripts/SigningBridge.java").absolutePath, signer.absolutePath,
+                archiveFile.get().asFile.absolutePath, signedArchiveFile.get().asFile.absolutePath,
+                privateKeyFile.get().asFile.absolutePath, certificateChainFile.get().asFile.absolutePath,
+            )
+        }.result.get().assertNormalExitValue()
+    }
+}
+// 发布只接受 prepare 锁定的同一个签名 ZIP；不重新构建或重新签名。
+tasks.named<org.jetbrains.intellij.platform.gradle.tasks.PublishPluginTask>("publishPlugin") {
+    setDependsOn(emptyList<Any>())
+    archiveFile = layout.buildDirectory.file("distributions/intellij-cvs-plugin-${project.version}.zip")
+    doFirst {
+        check(providers.environmentVariable("OPENCVS_MARKETPLACE_PREPARED_SHA256").isPresent) {
+            "请通过 scripts/release.py marketplace 使用已核验回执"
+        }
+        val actual = MessageDigest.getInstance("SHA-256")
+            .digest(archiveFile.get().asFile.readBytes()).joinToString("") { "%02x".format(it) }
+        check(actual == providers.environmentVariable("OPENCVS_MARKETPLACE_PREPARED_SHA256").get()) {
+            "签名 ZIP 已变化；拒绝上传"
+        }
+    }
+}
+
+// 单独核验最终同名发布资产，不触发重签。
+tasks.named<org.jetbrains.intellij.platform.gradle.tasks.VerifyPluginSignatureTask>("verifyPluginSignature") {
+    inputArchiveFile = layout.buildDirectory.file("distributions/intellij-cvs-plugin-${project.version}.zip")
+    certificateChainFile = layout.projectDirectory.file("docs/signing-cert.pem")
 }

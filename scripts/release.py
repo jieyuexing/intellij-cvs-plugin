@@ -7,6 +7,9 @@ import argparse
 import hashlib
 import io
 import json
+import os
+import stat
+import shutil
 import re
 import subprocess
 import sys
@@ -20,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REPOSITORY = "jieyuexing/intellij-cvs-plugin"
 ORIGIN = f"git@github.com:{REPOSITORY}.git"
 PLUGIN_ID = "io.github.jieyuexing.cvs"
-PLUGIN_NAME = "CVS (Community)"
+PLUGIN_NAME = "OpenCVS"
 RAW_URL = f"https://raw.githubusercontent.com/{REPOSITORY}/main/updatePlugins.xml"
 INDEX = "updatePlugins.xml"
 
@@ -155,6 +158,78 @@ def receipt_path(path: Path) -> Path:
     return path
 
 
+SIGNING_SERVICE = "intellij-cvs-plugin-signing-password"
+TOKEN_SERVICE = "jetbrains-marketplace-token"
+PRIVATE_KEY = Path.home() / "Library/Application Support/intellij-cvs-plugin/signing/private-key.pem"
+
+
+def keychain_value(service: str) -> str:
+    try:
+        result = subprocess.run(["security", "find-generic-password", "-s", service, "-w",
+                                 str(Path.home() / "Library/Keychains/login.keychain-db")],
+                                capture_output=True, text=True, timeout=15)
+    except subprocess.TimeoutExpired:
+        raise ReleaseError("钥匙串读取超时；如有图形授权窗口请用户处理，停止，不重试") from None
+    require(result.returncode == 0, f"钥匙串条目缺失或读取失败：{service}（退出码 {result.returncode}）")
+    value = result.stdout.rstrip("\n")
+    require(bool(value), f"钥匙串条目为空：{service}")
+    return value
+
+
+def signing_environment() -> dict[str, str]:
+    require(not any(p.is_symlink() for p in (PRIVATE_KEY, *PRIVATE_KEY.parents)), "私钥路径不得含 symlink")
+    require(PRIVATE_KEY.is_file(), "缺少签名私钥文件；prepare 停止")
+    for path, mode in ((PRIVATE_KEY, 0o600), (PRIVATE_KEY.parent, 0o700)):
+        info = path.stat()
+        require(info.st_uid == os.getuid() and stat.S_IMODE(info.st_mode) == mode,
+                "私钥文件/目录的 owner 或权限不符")
+    require(b"BEGIN ENCRYPTED PRIVATE KEY" in PRIVATE_KEY.read_bytes(), "私钥必须加密")
+    require((ROOT / "docs/signing-cert.pem").is_file(), "缺少签名证书")
+    return {"OPENCVS_SIGNING_PASSWORD": keychain_value(SIGNING_SERVICE)}
+
+
+def secret_gradle(*tasks: str, secrets: dict[str, str] | None = None) -> None:
+    # 禁用 daemon/configuration cache，凭据仅注入这一构建子进程；不打印秘密输出。
+    environment = os.environ.copy()
+    for key in ("OPENCVS_SIGNING_PASSWORD", "ORG_GRADLE_PROJECT_intellijPlatformPublishingToken"):
+        environment.pop(key, None)
+    environment.update(secrets or {})
+    result = subprocess.run(["./gradlew", "--no-daemon", "--no-configuration-cache", "--console=plain", *tasks],
+                            cwd=ROOT, env=environment, capture_output=True, text=True)
+    output = (result.stdout or "") + (result.stderr or "")
+    for value in (secrets or {}).values():
+        output = output.replace(value, "[REDACTED]")
+    print(output, end="")
+    require(result.returncode == 0, f"Gradle {', '.join(tasks)} 失败（退出码 {result.returncode}）")
+
+
+def verify_signature(artifact: Path) -> None:
+    require(artifact.is_file(), "签名 ZIP 不存在")
+    secret_gradle("verifyPluginSignature")
+
+
+def marketplace(path: Path, first_upload_completed: bool = False) -> None:
+    require(first_upload_completed, "首次上传必须先在 Marketplace 网页手动完成；之后才可使用 --first-upload-completed")
+    receipt = json.loads(receipt_path(path).read_text(encoding="utf-8"))
+    require(receipt["schema"] == 2, "需要已签名的 schema 2 回执")
+    head = clean_main()
+    commit = receipt["commit"]
+    require(git("rev-list", "--parents", "-n", "1", head).split() == [head, commit], "HEAD 必须是直属 XML 提交")
+    require(git("diff", "--name-only", commit, head) == INDEX, "后续提交只能修改 XML")
+    properties = read_properties(ROOT / "gradle.properties")
+    require(properties == receipt["properties"], "版本属性与回执不一致")
+    artifact = ROOT / "build/distributions" / f"intellij-cvs-plugin-{properties['pluginVersion']}.zip"
+    verify_zip(artifact, properties)
+    require(digest(artifact.read_bytes()) == receipt["zip_sha256"], "zip 已变化；拒绝上传")
+    require(digest((ROOT / INDEX).read_bytes()) == receipt["xml_sha256"], "XML 已变化")
+    verify_signature(artifact)
+    token = keychain_value(TOKEN_SERVICE)
+    secret_gradle("publishPlugin", secrets={
+        "ORG_GRADLE_PROJECT_intellijPlatformPublishingToken": token,
+        "OPENCVS_MARKETPLACE_PREPARED_SHA256": receipt["zip_sha256"],
+    })
+
+
 def prepare(path: Path) -> None:
     path = receipt_path(path)
     require(not path.exists(), "回执已存在；先审阅旧回执，使用新的回执文件名")
@@ -167,15 +242,23 @@ def prepare(path: Path) -> None:
     xml = render_index(properties)
     require(not (ROOT / INDEX).exists() or (ROOT / INDEX).read_bytes() != xml,
             "当前版本 XML 已在版本提交内；必须保持 XML 为单独的后续提交")
+    signing = signing_environment()
     for args in ((sys.executable, "-B", "scripts/check_i18n_keys.py"),
                  (sys.executable, "-B", "scripts/check_rust_roadmap.py"),
                  ("./gradlew", "compileJava"), ("./gradlew", "buildPlugin")):
         command(*args, capture=False)
     artifact = ROOT / "build/distributions" / f"intellij-cvs-plugin-{version}.zip"
     verify_zip(artifact, properties)
+    signed = artifact.with_name(artifact.stem + "-signed.zip")
+    signed.unlink(missing_ok=True)  # 不允许跳过签名后复用旧产物。
+    secret_gradle("signPlugin", secrets=signing)
+    require(signed.is_file(), "signPlugin 未产生已签名 ZIP")
+    shutil.copyfile(signed, artifact)
+    verify_zip(artifact, properties)
+    verify_signature(artifact)
     require(clean_main() == commit, "构建期间 HEAD 发生变化")
     require(remote_refs() == (remote, tags), "构建期间远端发生变化；重新核对")
-    receipt = {"schema": 1, "commit": commit, "remote": remote,
+    receipt = {"schema": 2, "commit": commit, "remote": remote,
                "properties": properties, "zip_sha256": digest(artifact.read_bytes()),
                "xml_sha256": digest(xml)}
     (ROOT / INDEX).write_bytes(xml)
@@ -198,7 +281,7 @@ def publish(path: Path) -> None:
     attempted = "本地及远端只读校验"
     try:
         receipt = json.loads(receipt_path(path).read_text(encoding="utf-8"))
-        require(receipt["schema"] == 1, "不支持的回执版本")
+        require(receipt["schema"] == 2, "不支持的回执版本")
         commit, remote = receipt["commit"], receipt["remote"]
         require(all(re.fullmatch(r"[0-9a-f]{40}", ref) for ref in (commit, remote)), "回执提交格式错误")
         head = clean_main()
@@ -211,6 +294,7 @@ def publish(path: Path) -> None:
         artifact = ROOT / "build/distributions" / f"intellij-cvs-plugin-{version}.zip"
         verify_zip(artifact, properties)
         require(digest(artifact.read_bytes()) == receipt["zip_sha256"], "zip 已变化；拒绝发布")
+        verify_signature(artifact)
         xml = render_index(properties)
         require((ROOT / INDEX).read_bytes() == xml and digest(xml) == receipt["xml_sha256"], "XML 与校验回执不一致")
         current_remote, tags = remote_refs()
@@ -227,7 +311,7 @@ def publish(path: Path) -> None:
         attempted = "创建 GitHub Release 并上传 zip"
         print(attempted, flush=True)
         command("gh", "release", "create", version, str(artifact), "--repo", REPOSITORY,
-                "--verify-tag", "--title", version, "--notes", f"CVS (Community) {version}")
+                "--verify-tag", "--title", version, "--notes", f"OpenCVS {version}")
         completed.append(attempted)
         attempted = "验证公开资产 HEAD 与下载 SHA-256"
         print(attempted, flush=True)
@@ -267,11 +351,15 @@ def publish(path: Path) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("prepare", "publish"))
+    parser.add_argument("action", choices=("prepare", "publish", "marketplace"))
     parser.add_argument("--receipt", type=Path, required=True, help="仓外任务目录中的校验回执 JSON")
+    parser.add_argument("--first-upload-completed", action="store_true", help="仅在首次网页上传完成后使用")
     args = parser.parse_args()
     try:
-        (prepare if args.action == "prepare" else publish)(args.receipt)
+        if args.action == "marketplace":
+            marketplace(args.receipt, args.first_upload_completed)
+        else:
+            (prepare if args.action == "prepare" else publish)(args.receipt)
         return 0
     except (ReleaseError, OSError, ValueError, KeyError, zipfile.BadZipFile, ET.ParseError) as exc:
         print(f"错误：{exc}", file=sys.stderr)

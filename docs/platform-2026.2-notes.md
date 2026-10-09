@@ -98,7 +98,7 @@ No manual language switch in the plugin: IntelliJ `DynamicBundle` follows IDE di
 
 1. IDEA → Settings → Plugins → ⚙️ → Install Plugin from Disk…  
 2. Choose `build/distributions/intellij-cvs-plugin-262.0.zip`
-3. Restart; confirm **CVS (Community)** (id `io.github.jieyuexing.cvs`, version **262.0**).
+3. Restart; confirm **OpenCVS** (id `io.github.jieyuexing.cvs`, version **262.0**).
 4. With **Chinese** UI language: Settings → Version Control → CVS / Global Settings should show Chinese labels.  
 5. Optional: open a CVS working copy; try Browse / Checkout / Update / History.
 
@@ -117,3 +117,36 @@ Before publishing 262.0, test the same multi-file selection on IDEA 2023.2.8 and
 2. Complete the rollback release gate on **2023.2.8** and **2026.2.1**.
 3. Runtime fixes for SOCKS / chooser / confirmation if needed.
 4. Run Rust roadmap Phase 0 profiling only after the Java path is stable; do not add Cargo/native code before the go/no-go gate.
+
+
+## Marketplace preparation: 262.0.2 (2026-10-09)
+
+`verifyPlugin` (Verifier 1.410) completed both targets: downloaded IDEA 2023.2.8
+(IU-232.10335.12) and the current local IDEA 2026.2 (IU-262.10968.63).
+It exited 1 due to `INTERNAL_API_USAGES`; this is not a dependency-resolution failure.
+
+| Category | 232 | 262 |
+| --- | ---: | ---: |
+| Compatibility problems reported | 0 | 0 |
+| Compatibility warnings | 1 | 1 |
+| Internal API usages | 0 | 32 |
+| Scheduled-for-removal usages | 65 | 126 |
+| Deprecated usages | 98 | 139 |
+| Experimental usages reported | 0 | 0 |
+
+Both warnings concern the inherited `com.intellij.cvsSupport2` package. The 262
+internal usages involve `CharsetToolkit`, `ActionsBundle`/`IdeBundle`, `SLRUCache`,
+`FileChooserFactoryImpl.getMacroMap`, `AbstractVcs` root conversion/filtering,
+and `ChangesUtil.findValidParentAccurately`. They span content decoding, settings,
+checkout, chooser UI and status-root semantics. Replacing these is not a mechanical
+rename: BOM/encoding handling and the existing 232 root-discovery fixes must remain
+behaviorally equivalent. No Java/protocol changes were made in this release.
+
+Rough follow-up estimate (not an implementation commitment): 1–2 days to investigate
+public alternatives and fixture boundaries, 3–5 days for focused adapters and dual-IDE
+checks, plus 2–3 days of real CVS workflow regression. Package migration and the wider
+deprecation backlog require separate scoping. Internal API use and the OpenBSD name
+collision remain Marketplace approval risks; these reports do not prove runtime
+checkout/update/commit/rollback behavior. Verifier also printed missing layout paths
+for the local modular IDE; both verdicts completed, but this diagnostic should be
+retained when interpreting the coverage.

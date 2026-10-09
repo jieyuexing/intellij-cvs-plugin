@@ -4,7 +4,7 @@
 
 IntelliJ **CVS** 集成插件的社区维护 fork，维护者：**jieyuexing**。
 
-**与 JetBrains 无隶属关系。**
+**与 OpenBSD 的 OpenCVS 项目及 JetBrains 均无隶属关系。**
 
 ## 源自（Fork of）
 
@@ -102,7 +102,7 @@ JetBrains 已弃用 CVS 支持，把代码迁到 `intellij-obsolete-plugins`，�
 | 字段 | 值 |
 | --- | --- |
 | Plugin ID | `io.github.jieyuexing.cvs` |
-| 显示名 | CVS (Community) |
+| 显示名 | OpenCVS |
 | Vendor | `jieyuexing` |
 | Vendor URL | https://github.com/jieyuexing |
 | Group | `io.github.jieyuexing` |
@@ -156,7 +156,7 @@ export JAVA_HOME="$HOME/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Hom
 python3 scripts/check_i18n_keys.py
 python3 scripts/check_rust_roadmap.py
 ./gradlew buildPlugin
-# 产物: build/distributions/intellij-cvs-plugin-262.0.1.zip
+# 产物: build/distributions/intellij-cvs-plugin-262.0.2.zip
 ```
 
 **版本约定：** 主号对齐 IDEA **2026.2** 平台线（`262.x`）。  
@@ -216,7 +216,7 @@ IDEA 2023.2.8 自带 JBR 17.0.12。展开项很多的“更改”树可能触发
 https://raw.githubusercontent.com/jieyuexing/intellij-cvs-plugin/main/updatePlugins.xml
 ```
 
-确认对话框后，在 **设置 → 插件 → 已安装** 中检查插件更新，安装 **CVS (Community)** 更新，并按提示重启。IDEA **2023.2** 与 **2026.2** 使用同一地址（build `232` 至 `262.*`），对应本 fork 的插件 ID `io.github.jieyuexing.cvs`。配置一次后，后续已发布版本可直接在 IDE 中更新，无需每次从磁盘选择 ZIP。
+确认对话框后，在 **设置 → 插件 → 已安装** 中检查插件更新，安装 **OpenCVS** 更新，并按提示重启。IDEA **2023.2** 与 **2026.2** 使用同一地址（build `232` 至 `262.*`），对应本 fork 的插件 ID `io.github.jieyuexing.cvs`。配置一次后，后续已发布版本可直接在 IDE 中更新，无需每次从磁盘选择 ZIP。
 
 版本 **262.0.1** 包含 passfile 固定 LF 换行修复。更新元数据不代表运行时兼容性已验收，上文的冒烟测试边界仍有效。维护者的准备命令、授权与先资产后索引的发布顺序见[发版合同](docs/release.md)。
 
@@ -236,3 +236,5 @@ https://raw.githubusercontent.com/jieyuexing/intellij-cvs-plugin/main/updatePlug
 ## 许可证
 
 Apache License 2.0。出处见 [LICENSE](LICENSE) 与 [SOURCE.txt](SOURCE.txt)。
+
+版本 **262.0.2** 使用 **OpenCVS** 名称和原创图标。GitHub 与 Marketplace 使用同一份签名 ZIP；Marketplace 是否可用仍取决于审核。签名及发布方式见[发版合同](docs/release.md)。

@@ -4,7 +4,7 @@
 
 Community fork of the IntelliJ **CVS** integration plugin, maintained by **jieyuexing**.
 
-**Not affiliated with JetBrains.**
+**Not affiliated with the OpenBSD OpenCVS project or JetBrains.**
 
 ## Fork of
 
@@ -102,7 +102,7 @@ Maintainer machines currently run the two **Active** rows only.
 | Field | Value |
 | --- | --- |
 | Plugin ID | `io.github.jieyuexing.cvs` |
-| Display name | CVS (Community) |
+| Display name | OpenCVS |
 | Vendor | `jieyuexing` |
 | Vendor URL | https://github.com/jieyuexing |
 | Group | `io.github.jieyuexing` |
@@ -156,7 +156,7 @@ export JAVA_HOME="$HOME/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Hom
 python3 scripts/check_i18n_keys.py
 python3 scripts/check_rust_roadmap.py
 ./gradlew buildPlugin
-# artifact: build/distributions/intellij-cvs-plugin-262.0.1.zip
+# artifact: build/distributions/intellij-cvs-plugin-262.0.2.zip
 ```
 
 **Versioning:** major tracks IDEA **2026.2** train (`262.x`).  
@@ -216,7 +216,7 @@ After the maintainer publishes the release, add this custom repository in **Sett
 https://raw.githubusercontent.com/jieyuexing/intellij-cvs-plugin/main/updatePlugins.xml
 ```
 
-Confirm the dialog, then check for plugin updates in **Settings → Plugins → Installed**. Install the **CVS (Community)** update and restart if prompted. The same repository applies to IDEA **2023.2** and **2026.2** (builds `232` through `262.*`); it uses this fork's plugin id `io.github.jieyuexing.cvs`. Once configured, future published versions can be installed through the IDE without choosing a ZIP from disk.
+Confirm the dialog, then check for plugin updates in **Settings → Plugins → Installed**. Install the **OpenCVS** update and restart if prompted. The same repository applies to IDEA **2023.2** and **2026.2** (builds `232` through `262.*`); it uses this fork's plugin id `io.github.jieyuexing.cvs`. Once configured, future published versions can be installed through the IDE without choosing a ZIP from disk.
 
 Version **262.0.1** includes the passfile LF line-ending fix. Update metadata alone does not prove runtime compatibility; the existing smoke-test boundaries above still apply. Maintainers: see the [release contract](docs/release.md) for preparation, authorization, and the asset-before-index publication order.
 
@@ -236,3 +236,5 @@ Version **262.0.1** includes the passfile LF line-ending fix. Update metadata al
 ## License
 
 Apache License 2.0. See [LICENSE](LICENSE) and [SOURCE.txt](SOURCE.txt) for provenance.
+
+Version **262.0.2** uses the **OpenCVS** name and original icons. Signed GitHub and Marketplace distributions use the same ZIP; Marketplace availability remains subject to review. See the [signing and publishing contract](docs/release.md).

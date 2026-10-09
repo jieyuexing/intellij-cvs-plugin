@@ -14,6 +14,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 import release
+import setup_signing
+import subprocess
 
 
 class ReleaseFixture(unittest.TestCase):
@@ -30,7 +32,7 @@ class ReleaseFixture(unittest.TestCase):
 
     def fixture_zip(self, field=None, value=None):
         descriptor = ET.fromstring(
-            '<idea-plugin><id>io.github.jieyuexing.cvs</id><name>CVS (Community)</name>'
+            '<idea-plugin><id>io.github.jieyuexing.cvs</id><name>OpenCVS</name>'
             '<version>262.0.1</version><idea-version since-build="232" until-build="262.*"/>'
             '</idea-plugin>')
         if field in ("since-build", "until-build"):
@@ -69,7 +71,7 @@ class ReleaseTests(ReleaseFixture):
         self.assertEqual("262.0.1", plugin.get("version"))
         self.assertEqual("https://github.com/jieyuexing/intellij-cvs-plugin/releases/download/262.0.1/intellij-cvs-plugin-262.0.1.zip", plugin.get("url"))
         self.assertEqual({"since-build": "232", "until-build": "262.*"}, plugin.find("idea-version").attrib)
-        self.assertEqual("CVS (Community)", plugin.findtext("name"))
+        self.assertEqual("OpenCVS", plugin.findtext("name"))
 
     def test_version_order(self):
         for left, right, expected in (("262.0.1", "262.0", 1), ("262.0", "262.1", -1),
@@ -120,6 +122,7 @@ class SyncTests(ReleaseFixture):
             with patch.object(release, "remote_refs", return_value=(remote, {"262.0"})), \
                     patch.object(release, "receipt_path", lambda path: path), \
                     patch.object(release, "command", command), \
+                    patch.object(release, "signing_environment", return_value={}), \
                     patch.object(release.urllib.request, "urlopen", side_effect=AssertionError("禁止网络")):
                 if relation in ("equal", "ahead"):
                     with self.assertRaisesRegex(RuntimeError, "进入构建"):
@@ -154,7 +157,7 @@ class PublishOrderTests(ReleaseFixture):
         commit, remote, head = "a" * 40, "b" * 40, "c" * 40
         receipt = self.root / "receipt.json"
         receipt.write_text(json.dumps({
-            "schema": 1, "commit": commit, "remote": remote,
+            "schema": 2, "commit": commit, "remote": remote,
             "properties": self.properties, "zip_sha256": release.digest(artifact.read_bytes()),
             "xml_sha256": release.digest(xml),
         }), encoding="utf-8")
@@ -207,6 +210,7 @@ class PublishOrderTests(ReleaseFixture):
         with contextlib.ExitStack() as stack:
             for target, replacement in (
                 ("ROOT", self.root), ("receipt_path", lambda path: path),
+                ("verify_signature", lambda path: None),
                 ("clean_main", lambda: head), ("git", fake_git),
                 ("command", fake_command), ("fetch_url", fake_fetch),
             ):
@@ -248,6 +252,110 @@ class PublishOrderTests(ReleaseFixture):
                     self.assertEqual(order[:index + 1], case.fixture_publish(step))
                 finally:
                     case.doCleanups()
+
+
+class SigningTests(ReleaseFixture):
+    def test_00_existing_key_refuses_without_keychain(self):
+        key = self.root / "private-key.pem"
+        key.write_text("existing")
+        with patch.object(setup_signing, "PRIVATE_KEY", key), patch.object(setup_signing, "run") as run:
+            with self.assertRaisesRegex(RuntimeError, "拒绝覆盖"):
+                setup_signing.preflight()
+            run.assert_not_called()
+        self.assertEqual("existing", key.read_text())
+
+    def test_01_existing_keychain_refuses(self):
+        with patch.object(setup_signing, "PRIVATE_KEY", self.root / "absent"), \
+                patch.object(setup_signing, "CERTIFICATE", self.root / "cert"), \
+                patch.object(setup_signing, "run", return_value=subprocess.CompletedProcess([], 0)):
+            with self.assertRaisesRegex(RuntimeError, "拒绝覆盖"):
+                setup_signing.preflight()
+
+    def test_02_prepare_missing_password_stops_before_build(self):
+        key = self.root / "signing/private-key.pem"
+        key.parent.mkdir(mode=0o700)
+        key.write_text("-----BEGIN ENCRYPTED PRIVATE KEY-----")
+        key.chmod(0o600)
+        (self.root / "docs").mkdir()
+        (self.root / "docs/signing-cert.pem").write_text("public fixture")
+        with patch.object(release, "ROOT", self.root), patch.object(release, "PRIVATE_KEY", key), \
+                patch.object(release, "receipt_path", lambda p: p), \
+                patch.object(release, "clean_main", return_value="a" * 40), \
+                patch.object(release, "remote_refs", return_value=("a" * 40, {"262.0"})), \
+                patch.object(release, "require_fast_forward"), patch.object(release, "git", return_value=""), \
+                patch.object(release, "command") as command, \
+                patch.object(release.subprocess, "run", return_value=subprocess.CompletedProcess([], 44, "", "")):
+            with self.assertRaisesRegex(release.ReleaseError, "钥匙串条目缺失"):
+                release.prepare(self.root / "receipt.json")
+            command.assert_not_called()
+            self.assertFalse((self.root / release.INDEX).exists())
+
+    def test_03_unsigned_or_invalid_signature_fails(self):
+        artifact = self.fixture_zip()
+        for diagnostic in ("unsigned", "invalid signature"):
+            with patch.object(release.subprocess, "run", return_value=subprocess.CompletedProcess([], 1, diagnostic, "")), \
+                    contextlib.redirect_stdout(io.StringIO()), self.assertRaises(release.ReleaseError):
+                release.verify_signature(artifact)
+
+    def test_04_token_missing(self):
+        with patch.object(release.subprocess, "run", return_value=subprocess.CompletedProcess([], 44, "", "")):
+            with self.assertRaisesRegex(release.ReleaseError, "jetbrains-marketplace-token"):
+                release.keychain_value(release.TOKEN_SERVICE)
+
+    def test_05_first_upload_gate(self):
+        with self.assertRaisesRegex(release.ReleaseError, "首次上传"):
+            release.marketplace(self.root / "absent")
+
+    def test_marketplace_missing_token_never_uploads(self):
+        artifact = self.fixture_zip()
+        directory = self.root / "build/distributions"
+        directory.mkdir(parents=True)
+        artifact = artifact.rename(directory / artifact.name)
+        xml = release.render_index(self.properties)
+        (self.root / release.INDEX).write_bytes(xml)
+        receipt = self.root / "receipt.json"
+        receipt.write_text(json.dumps({"schema": 2, "commit": "a" * 40,
+            "properties": self.properties, "zip_sha256": release.digest(artifact.read_bytes()),
+            "xml_sha256": release.digest(xml)}))
+        with patch.object(release, "ROOT", self.root), patch.object(release, "receipt_path", lambda p: p), \
+                patch.object(release, "clean_main", return_value="b" * 40), \
+                patch.object(release, "git", side_effect=["b" * 40 + " " + "a" * 40, release.INDEX]), \
+                patch.object(release, "verify_signature"), \
+                patch.object(release.subprocess, "run", return_value=subprocess.CompletedProcess([], 44, "", "")), \
+                patch.object(release, "secret_gradle") as upload:
+            with self.assertRaisesRegex(release.ReleaseError, "jetbrains-marketplace-token"):
+                release.marketplace(receipt, True)
+            upload.assert_not_called()
+
+    def test_setup_filesystem_failure_cleans_owned_materials(self):
+        key = self.root / "signing/private-key.pem"
+        cert = self.root / "missing-parent/cert.pem"
+        def fake_run(args, **kwargs):
+            if args[:2] == ["security", "find-generic-password"]:
+                if "-w" in args:
+                    return subprocess.CompletedProcess(args, 0, b"fixture-password\n", b"")
+                return subprocess.CompletedProcess(args, 44, b"", b"")
+            if args[:2] == ["openssl", "req"]:
+                Path(args[args.index("-out") + 1]).write_text("public cert")
+            return subprocess.CompletedProcess(args, 0, b"", b"")
+        with patch.object(setup_signing, "PRIVATE_KEY", key), patch.object(setup_signing, "CERTIFICATE", cert), \
+                patch.object(setup_signing.secrets, "token_hex", return_value="fixture-password"), \
+                patch.object(setup_signing, "run", side_effect=fake_run) as run, \
+                contextlib.redirect_stdout(io.StringIO()):
+            with self.assertRaises(FileNotFoundError):
+                setup_signing.main()
+            self.assertFalse(key.exists())
+            self.assertFalse(cert.exists())
+            self.assertEqual("delete-generic-password", run.call_args.args[0][1])
+
+    def test_secret_only_in_child_environment(self):
+        secret = "fixture-secret-never-in-argv"
+        with patch.object(release.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, secret, "")) as run, \
+                contextlib.redirect_stdout(io.StringIO()) as output:
+            release.secret_gradle("signPlugin", secrets={"OPENCVS_SIGNING_PASSWORD": secret})
+            self.assertNotIn(secret, repr(run.call_args.args))
+            self.assertEqual(secret, run.call_args.kwargs["env"]["OPENCVS_SIGNING_PASSWORD"])
+            self.assertNotIn(secret, output.getvalue())
 
 
 if __name__ == "__main__":
