@@ -89,11 +89,15 @@ java {
 intellijPlatform {
     buildSearchableOptions = false
 
-    // 明确检查两代维护目标，不自动扩大到其他 IDE。
+    // 两代维护目标加中间版本；跨产品调查通过显式开关运行。
     pluginVerification {
         ides {
             local(file("${System.getProperty("user.home")}/Applications/IntelliJ IDEA.app"))
             create("IU", "2023.2.8")
+            create("IU", "2024.3.6")
+            if (providers.gradleProperty("verifyCrossProduct").orNull == "true") {
+                create("WS", "2026.2")
+            }
         }
     }
 
