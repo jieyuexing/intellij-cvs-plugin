@@ -16,6 +16,7 @@ import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.history.FileRevisionTimestampComparator;
 import com.intellij.history.LocalHistory;
+import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -794,7 +795,9 @@ public class CvsChangeProvider implements ChangeProvider {
           operation = GetFileContentOperation.createForFile(myPath);
         }
         if (operation.getRoot().isOffline()) return null;
-        CvsVcs2.executeQuietOperation(CvsBundle.message("operation.name.get.file.content"), operation, myVcs.getProject());
+        final CvsResult executionResult =
+          CvsVcs2.executeQuietOperation(CvsBundle.message("operation.name.get.file.content"), operation, myVcs.getProject()).getResult();
+        if (executionResult.isCanceled() || executionResult.hasErrors()) return null;
         result = operation.tryGetFileBytes();
 
         if (result != null && revision != null) {

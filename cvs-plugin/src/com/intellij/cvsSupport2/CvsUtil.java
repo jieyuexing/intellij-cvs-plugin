@@ -496,7 +496,7 @@ public class CvsUtil {
 
   public static boolean haveCachedContent(final VirtualFile file, final String revision) {
     final File storedRevisionFile = createFromRevisionAndPath(file, revision);
-    return (storedRevisionFile != null) && storedRevisionFile.isFile();
+    return (storedRevisionFile != null) && storedRevisionFile.isFile() && storedRevisionFile.length() > 0;
   }
 
   @Nullable
@@ -521,7 +521,8 @@ public class CvsUtil {
     } else {
       storedRevisionFile = new File(parentFile, ".#" + name + '.' + revision);
     }
-    if ((! storedRevisionFile.exists()) || (! storedRevisionFile.isFile())) return null;
+    // 旧版可能把中止操作缓存为空；只排除 BaseRevisions，不影响 merge 文件。
+    if (!storedRevisionFile.isFile() || storedRevisionFile.length() == 0) return null;
     return storedRevisionFile;
   }
 
@@ -529,7 +530,8 @@ public class CvsUtil {
     try {
       File storedRevisionFile = getCachedContentFile(parent, name, revision);
       if (storedRevisionFile == null) return null;
-      return FileUtil.loadFileBytes(storedRevisionFile);
+      final byte[] content = FileUtil.loadFileBytes(storedRevisionFile);
+      return content.length == 0 ? null : content;
     }
     catch (IOException e) {
       LOG.error(e);
@@ -593,8 +595,8 @@ public class CvsUtil {
     if (storedRevisionFile == null) {
       return;
     }
-    // already exists
-    if (storedRevisionFile.isFile()) return;
+    // 仅覆盖当前版本的零字节坏缓存，保留已有非空缓存。
+    if (storedRevisionFile.isFile() && storedRevisionFile.length() > 0) return;
     try {
       FileUtil.writeToFile(storedRevisionFile, bytes);
       storedRevisionFile.setLastModified(file.getTimeStamp());
