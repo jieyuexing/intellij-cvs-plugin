@@ -75,7 +75,10 @@ public class CvsFileUtil {
   }
 
   public static void storeLines(List<String> lines, File file) throws IOException {
-    String separator = getLineSeparatorFor(file);
+    storeLines(lines, file, getLineSeparatorFor(file));
+  }
+
+  public static void storeLines(List<String> lines, File file, String separator) throws IOException {
     FileUtil.createIfDoesntExist(file);
     if (!file.canWrite()) {
       new FileReadOnlyHandler().setFileReadOnly(file, false);
