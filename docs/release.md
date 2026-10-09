@@ -98,6 +98,7 @@ Gradle `signing` 使用 `privateKeyFile`、`certificateChainFile` 和环境变�
 - 插件页：<https://plugins.jetbrains.com/plugin/34911-opencvs>（数字 id `34911`，xmlId `io.github.jieyuexing.cvs`）。审核状态可只读查询 `https://plugins.jetbrains.com/api/plugins/34911` 与 `/api/plugins/34911/updates`（未批准的版本不在公开列表中）。
 - 2026-10-09：用户首次网页上传 `262.0.3`（update id `1190253`，`approve=false`）。同日审核回信（工单 #9241280）：Plugin Verifier 报告 Internal API 使用，要求移除后重新上传；未对名称提出异议。本地 `verifyPlugin` 对 IU-262 报告 32 处（`CharsetToolkit`、`ActionsBundle`/`IdeBundle`、`SLRUCache`、`FileChooserFactoryImpl`、`ChangesUtil`、`AbstractVcs.filterUniqueRoots`/`getCustomConvertor` 覆写），IU-232 为 0。
 - 上传时插件的 Source code URL 字段为空，需在页面设置中补为 `https://github.com/jieyuexing/intellij-cvs-plugin`（准则 3.3）。
+- 2026-10-09 提交 `5a7ad5e`：`ActionsBundle`/`IdeBundle` 改为插件自有中英文 key，`check_i18n_keys.py` 防回退；IU-262 内部 API 32 → 23，IU-232 仍为 0。剩余 23 处（`CharsetToolkit` 14、`SLRUCache` 4、`FileChooserFactoryImpl` 2、`AbstractVcs` 覆写 2、`ChangesUtil` 1）清零后发 `262.0.4`，再上传 Marketplace。
 
 ### 后续 Marketplace 更新（另行授权）
 
