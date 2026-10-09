@@ -19,7 +19,6 @@ import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.icons.AllIcons;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
@@ -87,8 +86,8 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
 
   private static class EditSourceAction extends AnAction implements DumbAware {
     EditSourceAction() {
-      super(ActionsBundle.actionText("EditSource"),
-            ActionsBundle.actionDescription("EditSource"),
+      super(CvsBundle.messagePointer("action.edit.source.text"),
+            CvsBundle.messagePointer("action.edit.source.description"),
             AllIcons.Actions.EditSource);
     }
 

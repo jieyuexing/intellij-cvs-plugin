@@ -36,7 +36,7 @@ public class MigrateRootDialog extends DialogWrapper {
 
   public MigrateRootDialog(Project project, VirtualFile directory) {
     super(project);
-    setTitle("Migrate CVS Root");
+    setTitle(CvsBundle.message("dialog.title.migrate.cvs.root"));
     final File file = CvsVfsUtil.getFileFor(directory);
     final String root = CvsUtil.loadRootFrom(file);
     myRadioButton1 = new JRadioButton(CvsBundle.message("migrate.replace.if.root.equals.label", root));
@@ -58,7 +58,7 @@ public class MigrateRootDialog extends DialogWrapper {
       }
     };
     descriptor.setRoots(ProjectRootManager.getInstance(project).getContentRootsFromAllModules());
-    myDirectoryField.addBrowseFolderListener("Select directory to migrate to a new CVS root", "", project, descriptor);
+    myDirectoryField.addBrowseFolderListener(CvsBundle.message("dialog.title.select.directory.to.migrate"), "", project, descriptor);
     FileChooserFactory.getInstance().installFileCompletion(myDirectoryField.getChildComponent(), descriptor, true, getDisposable());
     myDirectoryField.getTextField().getDocument().addDocumentListener(new DocumentListener() {
       @Override
@@ -87,7 +87,7 @@ public class MigrateRootDialog extends DialogWrapper {
       }
     };
     myCvsConfigurationPanel.addListSelectionListener(myListener);
-    setOKButtonText("Migrate");
+    setOKButtonText(CvsBundle.message("button.text.migrate"));
     init();
   }
 

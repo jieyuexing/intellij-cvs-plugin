@@ -19,6 +19,18 @@
     <p><a href="https://github.com/jieyuexing/intellij-cvs-plugin">Source code and issue tracker</a> ·
     <a href="https://github.com/jieyuexing/intellij-cvs-plugin/blob/main/LICENSE">Apache License 2.0</a> ·
     <a href="https://github.com/JetBrains/intellij-obsolete-plugins/tree/master/cvs">Original CVS source</a></p>
+    <p>与 OpenBSD OpenCVS 项目及 JetBrains 均无隶属关系。</p>
+    <p><b>OpenCVS</b> 为仍在维护的 IntelliJ IDEA 提供 CVS 版本控制。
+    可在 IDE 中浏览仓库、检出和更新工作副本、提交更改、查看历史、比较修订并管理 CVS 设置。
+    界面文案随 IDE 显示语言在中英文之间切换。</p>
+    <p>本插件是 JetBrains 已冻结 CVS 插件的独立社区分支，由 jieyuexing 维护。
+    它不是 JetBrains 官方产品，与 JetBrains 无隶属关系。</p>
+    <p>声明的安装范围为 IntelliJ IDEA 2023.2 至 2026.2（构建号 232–262.*）。
+    维护目标为 2023.2.8 与 2026.2.1；该范围不保证每一条 API 路径均已验证。
+    兼容性结论与尚未完成的运行时检查见源码仓库的平台说明。</p>
+    <p><a href="https://github.com/jieyuexing/intellij-cvs-plugin">源码与问题跟踪</a> ·
+    <a href="https://github.com/jieyuexing/intellij-cvs-plugin/blob/main/LICENSE">Apache License 2.0</a> ·
+    <a href="https://github.com/JetBrains/intellij-obsolete-plugins/tree/master/cvs">原始 CVS 源码</a></p>
   ]]></description>
 
   <depends>com.intellij.modules.lang</depends>

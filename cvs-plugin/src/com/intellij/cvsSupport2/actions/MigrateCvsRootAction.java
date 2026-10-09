@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.actions;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.actions.actionVisibility.CvsActionVisibility;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextWrapper;
@@ -90,7 +91,7 @@ public class MigrateCvsRootAction extends AnAction implements DumbAware {
     for (File file : rootFiles) {
       CvsVfsUtil.findFileByIoFile(file).refresh(true, false);
     }
-    StatusBar.Info.set("Finished migrating CVS root to " + cvsRoot, project);
+    StatusBar.Info.set(CvsBundle.message("status.text.migrate.cvs.root.finished", cvsRoot), project);
   }
 
 

@@ -198,7 +198,7 @@ public class CvsOperationExecutor {
         }
       }
       final String errorMessage = StringUtil.join(messages, "\n");
-      Messages.showErrorDialog(errorMessage, "CVS Error");
+      Messages.showErrorDialog(errorMessage, CvsBundle.message("error.title.cvs.error"));
       return;
     }
     if (!errors.isEmpty()) {

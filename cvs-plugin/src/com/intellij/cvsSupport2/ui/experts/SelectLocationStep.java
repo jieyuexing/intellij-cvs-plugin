@@ -15,11 +15,10 @@
  */
 package com.intellij.cvsSupport2.ui.experts;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.treeView.NodeRenderer;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -154,7 +153,7 @@ public abstract class SelectLocationStep extends WizardStep {
     myNorthPanel.add(toolbarPanel, BorderLayout.NORTH);
     panel.add(myNorthPanel, BorderLayout.NORTH);
     panel.add(ScrollPaneFactory.createScrollPane(myFileSystemTree.getTree()), BorderLayout.CENTER);
-    String DRAG_N_DROP_HINT = "Drag and drop a file into the space above to quickly locate it in the tree";
+    String DRAG_N_DROP_HINT = CvsBundle.message("file.chooser.drag.and.drop.hint");
     JLabel dndLabel = new JLabel(DRAG_N_DROP_HINT, SwingConstants.CENTER);
     dndLabel.setFont(JBUI.Fonts.miniFont());
     dndLabel.setForeground(UIUtil.getLabelDisabledForeground());
@@ -314,19 +313,19 @@ public abstract class SelectLocationStep extends WizardStep {
 
     @Override
     protected void onSetActive(final boolean active) {
-      final String tooltip = KeymapUtil.createTooltipText(ActionsBundle.message("action.FileChooser.TogglePathShowing.text"),
+      final String tooltip = KeymapUtil.createTooltipText(CvsBundle.message("action.file.chooser.toggle.path.showing.text"),
                                                           "FileChooser.TogglePathBar");
       setToolTipText(tooltip);
     }
 
     @Override
     protected String getStatusBarText() {
-      return ActionsBundle.message("action.FileChooser.TogglePathShowing.text");
+      return CvsBundle.message("action.file.chooser.toggle.path.showing.text");
     }
 
     public void update() {
       setVisible(true);
-      setText(myShowPath ? IdeBundle.message("file.chooser.hide.path") : IdeBundle.message("file.chooser.show.path"));
+      setText(myShowPath ? CvsBundle.message("file.chooser.hide.path") : CvsBundle.message("file.chooser.show.path"));
     }
 
     @Override
