@@ -107,7 +107,7 @@ smartcvs-src/messages/SmartCvsSrcBundle_zh.properties
 | `smartcvs-src/` | SmartCVS 相关源码 + 其 Bundle |
 | `trilead-ssh2-build213/`、`lib/` | SSH 依赖 |
 | `testSource/` | 测试 |
-| `README.md` | 人类可读（英文）：时间线、官方冻结、维护策略 |
+| `README.md` | 人类可读（英文）：功能、安装、兼容（Active 表）、常见问题、版本记录、背景与维护策略、状态 |
 | `README_ZH.md` | 人类可读（中文），与 README 同步维护 |
 | `SOURCE.txt` | 出处与身份摘要 |
 | `AGENTS.md` | **本文件**：Agent/协作者工作合同 |

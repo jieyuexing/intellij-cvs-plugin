@@ -93,6 +93,12 @@ Gradle `signing` 使用 `privateKeyFile`、`certificateChainFile` 和环境变�
 5. 检查英文描述、change-notes 和联系资料。每次上传均有 Verifier 与人工审核；内部 API、兼容性问题、名称冲突可能阻断，不保证审核时长或通过。
 6. 保存页面 URL 与审核结果；首次网页上传完成后才使用后续自动更新入口。本轮不执行上传或安装。
 
+### Marketplace 现场记录
+
+- 插件页：<https://plugins.jetbrains.com/plugin/34911-opencvs>（数字 id `34911`，xmlId `io.github.jieyuexing.cvs`）。审核状态可只读查询 `https://plugins.jetbrains.com/api/plugins/34911` 与 `/api/plugins/34911/updates`（未批准的版本不在公开列表中）。
+- 2026-10-09：用户首次网页上传 `262.0.3`（update id `1190253`，`approve=false`）。同日审核回信（工单 #9241280）：Plugin Verifier 报告 Internal API 使用，要求移除后重新上传；未对名称提出异议。本地 `verifyPlugin` 对 IU-262 报告 32 处（`CharsetToolkit`、`ActionsBundle`/`IdeBundle`、`SLRUCache`、`FileChooserFactoryImpl`、`ChangesUtil`、`AbstractVcs.filterUniqueRoots`/`getCustomConvertor` 覆写），IU-232 为 0。
+- 上传时插件的 Source code URL 字段为空，需在页面设置中补为 `https://github.com/jieyuexing/intellij-cvs-plugin`（准则 3.3）。
+
 ### 后续 Marketplace 更新（另行授权）
 
 由用户自己写入 token，避免把 token 放在 shell 命令行或历史中；以下命令形态的 `-w` 省略值，由 macOS 提示输入（先确认默认钥匙串为登录钥匙串）：
