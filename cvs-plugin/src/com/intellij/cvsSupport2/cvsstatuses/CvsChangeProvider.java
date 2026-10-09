@@ -54,6 +54,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,6 +87,7 @@ public class CvsChangeProvider implements ChangeProvider {
     final List<Path> cvsRootPaths = toPaths(cvsRoots);
     showBranchImOn(builder, dirtyScope, cvsRoots);
 
+    final Set<String> visitedDirectories = new HashSet<>();
     final HashMap<String, FilePath> recursivePaths = new HashMap<>();
     for (FilePath path : dirtyScope.getRecursivelyDirtyDirectories()) {
       recursivePaths.putIfAbsent(normalizeDirtyPath(path), path);
@@ -98,7 +100,11 @@ public class CvsChangeProvider implements ChangeProvider {
       }
       final VirtualFile dir = path.getVirtualFile();
       if (dir != null) {
-        processEntriesIn(dir, dirtyScope, builder, true, cvsRoots, cvsRootPaths, progress);
+        processEntriesIn(dir, dirtyScope, builder, true, cvsRoots, cvsRootPaths, progress, visitedDirectories);
+        // 独立嵌套根可能位于未登记在父 Entries 中的目录里，不能只沿父根 Entries 遍历。
+        for (VirtualFile nested : getNestedCvsRoots(dir, cvsRoots)) {
+          processEntriesIn(nested, dirtyScope, builder, true, cvsRoots, cvsRootPaths, progress, visitedDirectories);
+        }
         addNormalizedPath(path, processedRecursivePaths);
       }
       else {
@@ -115,7 +121,7 @@ public class CvsChangeProvider implements ChangeProvider {
       if (path.isDirectory()) {
         final VirtualFile dir = path.getVirtualFile();
         if (dir != null) {
-          processEntriesIn(dir, dirtyScope, builder, false, cvsRoots, cvsRootPaths, progress);
+          processEntriesIn(dir, dirtyScope, builder, false, cvsRoots, cvsRootPaths, progress, visitedDirectories);
         }
         else {
           processFile(path, builder, cvsRootPaths, progress);
@@ -204,8 +210,10 @@ public class CvsChangeProvider implements ChangeProvider {
 
   private void processEntriesIn(@NotNull VirtualFile dir, VcsDirtyScope scope, ChangelistBuilder builder, boolean recursively,
                                 Collection<VirtualFile> cvsRoots, Collection<Path> cvsRootPaths,
-                                final ProgressIndicator progress) throws VcsException {
+                                final ProgressIndicator progress, Set<String> visitedDirectories) throws VcsException {
     final FilePath path = VcsContextFactory.SERVICE.getInstance().createFilePathOn(dir);
+    if (myVcsManager.getVcsFor(path) != myVcs) return;
+    if (!visitedDirectories.add(normalizeDirtyPath(path))) return;
     // A recursive dirty directory already authorizes its complete subtree. IDEA 232 does not
     // reliably report scope membership for descendants of roots produced by a custom roots
     // converter, so checking every child would truncate the scan at the first directory level.
@@ -224,7 +232,7 @@ public class CvsChangeProvider implements ChangeProvider {
         if (recursively) {
           for (VirtualFile root : nestedRoots) {
             progress.checkCanceled();
-            processEntriesIn(root, scope, builder, true, cvsRoots, cvsRootPaths, progress);
+            processEntriesIn(root, scope, builder, true, cvsRoots, cvsRootPaths, progress, visitedDirectories);
           }
         }
         return;
@@ -256,6 +264,7 @@ public class CvsChangeProvider implements ChangeProvider {
     }
 
     for (VirtualFile file : dirContent.getUnknownDirectories()) {
+      if (cvsRoots.contains(file) || !getNestedCvsRoots(file, cvsRoots).isEmpty()) continue;
       if (dirContent.getCvsInfo().getIgnoreFilter().shouldBeIgnored(file) || myVcsManager.isIgnored(file)) {
         builder.processIgnoredFile(VcsUtil.getFilePath(file));
       }
@@ -281,7 +290,7 @@ public class CvsChangeProvider implements ChangeProvider {
         progress.checkCanceled();
         final VirtualFile file = directoryEntry.getVirtualFile();
         if (!myVcsManager.isIgnored(file)) {
-          processEntriesIn(file, scope, builder, true, cvsRoots, cvsRootPaths, progress);
+          processEntriesIn(file, scope, builder, true, cvsRoots, cvsRootPaths, progress, visitedDirectories);
         }
         else {
           if (LOG.isDebugEnabled()) {

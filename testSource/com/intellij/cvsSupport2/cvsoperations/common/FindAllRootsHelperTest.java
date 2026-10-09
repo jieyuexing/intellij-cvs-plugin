@@ -19,6 +19,7 @@ public final class FindAllRootsHelperTest {
     try {
       final Path applicationRoot = createCvsRoot(container.resolve("project/application"));
       createCvsRoot(applicationRoot.resolve("src"));
+      Files.writeString(applicationRoot.resolve("src/CVS/Repository"), "module/src\n");
       final Path dictionaryRoot = createCvsRoot(container.resolve("docs/dictionary"));
       final Path runtime = Files.createDirectories(container.resolve("docker/weblogic12c/runtime/logs"));
       Files.writeString(runtime.resolve("server.log"), "not versioned");
