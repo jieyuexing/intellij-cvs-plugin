@@ -92,6 +92,7 @@ If VoiceOver and IDE accessibility are not needed, add `-Dsun.awt.mac.a11y.enabl
 
 | Version | Date | Changes |
 | --- | --- | --- |
+| `262.0.6` | 2026-10-10 | Fix operations hanging forever after the server stayed silent past the read timeout (now fail with the timeout error, and stay cancellable); default timeout raised from 10 to 300 seconds. |
 | `262.0.5` | 2026-10-09 | Remove the remaining internal root APIs; automatically expand container mappings with rollback records, retain nested roots and IDEA 2023.2 status handling. Verifier: zero internal API usages and compatibility problems on IU-232/243/253/261/262. |
 | `262.0.4` | 2026-10-09 | Internal API usages replaced with public APIs or plugin-owned code (30 of 32 reported for IDEA 2026.2); remaining hard-coded UI texts moved to English/Chinese bundles. |
 | `262.0.3` | 2026-10-09 | Canceled or failed content requests no longer cache an empty diff baseline; zero-byte `CVS/BaseRevisions` caches are ignored and refreshed. |

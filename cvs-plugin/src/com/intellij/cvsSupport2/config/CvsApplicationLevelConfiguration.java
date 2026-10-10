@@ -41,7 +41,8 @@ public class CvsApplicationLevelConfiguration implements PersistentStateComponen
 
   @NonNls private static final String CONFIGURATION_ELEMENT_NAME = "Configuration";
   public String PATH_TO_PASSWORD_FILE = null;
-  public int TIMEOUT = 10;
+  // 秒；建连另有 10 秒上限，这里只限制读空闲。服务器遍历大目录树时常静默超过 10 秒。
+  public int TIMEOUT = 300;
   public boolean MAKE_CHECKED_OUT_FILES_READONLY = false;
   public boolean CHECKOUT_PRUNE_EMPTY_DIRECTORIES = true;
   public String CHECKOUT_KEYWORD_SUBSTITUTION = null;

@@ -117,7 +117,7 @@ public class ReadThread implements Runnable {
   }
 
   private int waitForAvailableBytes() throws IOException {
-    while (size() == 0 && !myAtEndOfStream) {
+    while (size() == 0 && !myAtEndOfStream && myException == null) {
       try {
         notify();
         wait(TIMEOUT);

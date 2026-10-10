@@ -111,6 +111,13 @@ intellijPlatform {
         name = "OpenCVS"
         version = providers.gradleProperty("pluginVersion")
         changeNotes = """
+            <p><b>262.0.6</b></p>
+            <ul>
+              <li>Fix update, history and other operations hanging forever once the server stayed silent longer than the read timeout; they now fail with the timeout error and remain cancellable.</li>
+              <li>Raise the default timeout from 10 to 300 seconds; the connect timeout stays capped at 10 seconds.</li>
+              <li>修复服务器静默超过读超时后更新、历史等操作永久卡住的问题；现在会报超时错误，且可随时取消。</li>
+              <li>默认超时由 10 秒调为 300 秒；建立连接的超时仍最多 10 秒。</li>
+            </ul>
             <p><b>262.0.5</b></p>
             <ul>
               <li>Remove the remaining internal root API overrides. Detect CVS roots through public APIs and automatically expand container mappings after a complete, cancellable background scan.</li>
