@@ -106,6 +106,7 @@ public class AdminWriterOnCache implements IAdminWriter {
     if (myUpdatedFilesManager.fileIsNotUpdated(new File(parent, entry.getFileName()))) return;
     if (notUnderCvs(directoryObject, cvsFileSystem)) return;
     myAdminWriter.setEntry(directoryObject, entry, cvsFileSystem);
+    CvsContentHashes.getInstance().record(new File(parent, entry.getFileName()), entry);
     VirtualFile virtualParent = CvsVfsUtil.findFileByIoFile(parent);
     Entry existing = myCvsEntriesManager.getEntryFor(virtualParent, entry.getFileName());
     if (existing == null) myUpdatedFilesManager.addNewlyCreatedEntry(entry);
@@ -118,6 +119,7 @@ public class AdminWriterOnCache implements IAdminWriter {
     File file = cvsFileSystem.getLocalFileSystem().getFile(fileObject);
     if (myUpdatedFilesManager.fileIsNotUpdated(file)) return;
     myAdminWriter.removeEntryForFile(fileObject, cvsFileSystem);
+    CvsContentHashes.getInstance().invalidate(file);
   }
 
   @Override

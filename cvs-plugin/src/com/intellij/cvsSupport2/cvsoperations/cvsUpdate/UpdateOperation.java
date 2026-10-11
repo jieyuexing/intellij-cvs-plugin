@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.cvsUpdate;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.update.UpdateByBranchUpdateSettings;
 import com.intellij.cvsSupport2.actions.update.UpdateSettings;
@@ -22,8 +23,15 @@ import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.common.*;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
+import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
+import com.intellij.openapi.vcs.VcsException;
+import org.netbeans.lib.cvsclient.command.CommandException;
+import org.netbeans.lib.cvsclient.connection.CommandConnection;
+import org.netbeans.lib.cvsclient.progress.IProgressViewer;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -37,6 +45,7 @@ import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 import org.netbeans.lib.cvsclient.util.IIgnoreFileFilter;
 
 import java.io.File;
+import java.util.Locale;
 
 /**
  * author: lesya
@@ -77,8 +86,31 @@ public class UpdateOperation extends CvsOperationOnFiles {
   }
 
   @Override
+  protected void execute(CvsRootProvider root, CvsExecutionEnvironment environment,
+                         ReadWriteStatistics statistics, IProgressViewer progress)
+    throws CommandException, VcsException {
+    execute(root, environment,
+            new CommandConnection(root.getCvsRoot().getRepositoryPath(), () -> root.createConnection(statistics)), progress);
+  }
+
+  @Override
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     final UpdateCommand updateCommand = new UpdateCommand();
+    updateCommand.setUploadBatchLimit(20L * 1024 * 1024);
+    updateCommand.setCheckCanceled(ProgressManager::checkCanceled);
+    updateCommand.setUploadBatchProgress(new UpdateCommand.UploadBatchProgress() {
+      @Override public void started(int index, int count, long bytes) {
+        final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        if (indicator != null) indicator.setText(CvsBundle.message(
+          "progress.text.update.upload.batch", index, count,
+          String.format(Locale.ROOT, "%.1f", bytes / (1024.0 * 1024))));
+      }
+      @Override public void finished() {
+        final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        if (indicator != null) indicator.setText(CvsBundle.message(
+          "progress.text.command.running.for.file", getOperationName(), root.getCvsRootAsString()));
+      }
+    });
     addFilesToCommand(root, updateCommand);
     //updateCommand.setPruneDirectories(myUpdateSettings.getPruneEmptyDirectories());
     updateCommand.setCleanCopy(myUpdateSettings.getCleanCopy());

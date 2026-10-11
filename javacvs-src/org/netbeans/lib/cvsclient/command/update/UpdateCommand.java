@@ -34,6 +34,13 @@ import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import org.netbeans.lib.cvsclient.file.DirectoryObject;
+import org.netbeans.lib.cvsclient.event.IMessageListener;
+import org.netbeans.lib.cvsclient.event.TaggedMessageParser;
 
 /**
  * The Update command. Updates files that have previously been checked out
@@ -45,6 +52,97 @@ public final class UpdateCommand extends AbstractCommand
         implements IUpdatingCommand {
 
 	// Fields =================================================================
+
+  private long uploadBatchLimit;
+  private Runnable checkCanceled = () -> {};
+  private UploadBatchProgress uploadBatchProgress = (index, count, bytes) -> {};
+
+  @FunctionalInterface
+  public interface UploadBatchProgress {
+    void started(int index, int count, long bytes);
+    default void finished() {}
+  }
+
+  public void setUploadBatchLimit(long bytes) { uploadBatchLimit = bytes; }
+  public void setUploadBatchProgress(UploadBatchProgress progress) { uploadBatchProgress = progress; }
+  public void setCheckCanceled(Runnable check) { checkCanceled = check; }
+
+  private boolean canBatch() {
+    return uploadBatchLimit > 0 && !getGlobalOptions().isDoNoChanges()
+           && !cleanCopy && !resetStickyOnes && updateByRevision == null && updateByDate == null
+           && keywordSubst == null && mergeRevision1 == null && mergeRevision2 == null;
+  }
+
+  private List<List<UploadBatchPlanner.Upload<FileObject>>> planUploads(IClientEnvironment environment)
+    throws IOException {
+    List<UploadBatchPlanner.Upload<FileObject>> uploads = new ArrayList<>();
+    Set<FileObject> seen = new HashSet<>();
+    scanFileSystem(environment).visit(new ICvsFilesVisitor() {
+      @Override public void handleDirectory(DirectoryObject directory) { checkCanceled.run(); }
+      @Override public void handleFile(FileObject file, Entry entry, boolean exists) {
+        checkCanceled.run();
+        if (!exists || entry == null || entry.isRemoved() || !seen.add(file)) return;
+        if (entry.isConflict() || entry.getLastModified() == null
+            || isModified(file, entry.getLastModified(), environment)) {
+          uploads.add(new UploadBatchPlanner.Upload<>(file,
+            environment.getCvsFileSystem().getLocalFileSystem().getFile(file).length()));
+        }
+      }
+    });
+    return UploadBatchPlanner.plan(uploads, uploadBatchLimit);
+  }
+
+  // An error terminator alone is not a plugin error. Only a conflict-only round
+  // may continue after false; all other failures stop before the next request.
+  private static final class BatchMessages implements IMessageListener {
+    boolean conflict;
+    boolean otherError;
+    private final TaggedMessageParser taggedMessages = new TaggedMessageParser();
+    @Override public void messageSent(String message, byte[] bytes, boolean error, boolean tagged) {
+      if (tagged) {
+        if (!message.isEmpty()) accept(taggedMessages.parseTaggedMessage(message), false);
+      }
+      else {
+        accept(taggedMessages.getString(), false);
+        accept(message, error);
+      }
+    }
+    private void accept(String message, boolean error) {
+      if (message == null) return;
+      if (message.startsWith("C ")) conflict = true;
+      else if (error && !message.trim().isEmpty() && !message.matches("cvs.*: Updating.*")) otherError = true;
+    }
+    @Override public void binaryMessageSent(byte[] bytes) {}
+  }
+
+  private boolean executeBatches(IRequestProcessor processor, IEventSender sender,
+                                ICvsListenerRegistry registry, IClientEnvironment environment,
+                                IProgressViewer progress) throws CommandException, AuthenticationException {
+    final List<List<UploadBatchPlanner.Upload<FileObject>>> batches;
+    try { batches = planUploads(environment); }
+    catch (IOException e) { throw new IOCommandException(e); }
+    for (int i = 0; i < batches.size(); i++) {
+      checkCanceled.run();
+      UpdateCommand batch = new UpdateCommand();
+      batch.setUseHeadIfNotFound(useHeadIfNotFound);
+      batch.getGlobalOptions().setCheckedOutFilesReadOnly(getGlobalOptions().isCheckedOutFilesReadOnly());
+      long bytes = 0;
+      for (UploadBatchPlanner.Upload<FileObject> upload : batches.get(i)) {
+        batch.addFileObject(upload.file());
+        bytes += upload.bytes();
+      }
+      uploadBatchProgress.started(i + 1, batches.size(), bytes);
+      BatchMessages messages = new BatchMessages();
+      registry.addMessageListener(messages);
+      boolean success;
+      try { success = batch.execute(processor, sender, registry, environment, progress); }
+      finally { registry.removeMessageListener(messages); }
+      if (!success && (!messages.conflict || messages.otherError)) return false;
+    }
+    checkCanceled.run();
+    if (!batches.isEmpty()) uploadBatchProgress.finished();
+    return true;
+  }
 
 	private boolean buildDirectories;
 	private boolean cleanCopy;
@@ -73,6 +171,9 @@ public final class UpdateCommand extends AbstractCommand
 	@Override
         public boolean execute(IRequestProcessor requestProcessor, IEventSender eventSender, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer)
           throws CommandException, AuthenticationException {
+    if (canBatch() && !executeBatches(requestProcessor, eventSender, listenerRegistry, clientEnvironment, progressViewer)) {
+      return false;
+    }
 		final ICvsFiles cvsFiles;
 		try {
 			cvsFiles = scanFileSystem(clientEnvironment);

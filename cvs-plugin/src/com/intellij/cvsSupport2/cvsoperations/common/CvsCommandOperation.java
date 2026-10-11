@@ -28,6 +28,7 @@ import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsMessagesTranslator;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.FileMessage;
 import com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls.AdminReaderOnCache;
 import com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls.AdminWriterOnCache;
+import com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls.CvsContentHashes;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.cvsSupport2.errorHandling.CvsException;
 import com.intellij.cvsSupport2.javacvsImpl.FileReadOnlyHandler;
@@ -51,6 +52,7 @@ import org.netbeans.lib.cvsclient.admin.IAdminReader;
 import org.netbeans.lib.cvsclient.admin.IAdminWriter;
 import org.netbeans.lib.cvsclient.command.*;
 import org.netbeans.lib.cvsclient.command.update.UpdateFileInfo;
+import org.netbeans.lib.cvsclient.command.update.UpdateCommand;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
 import org.netbeans.lib.cvsclient.event.*;
@@ -259,7 +261,15 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
       catch (AuthenticationException e) {
         throw root.processException(new CommandException(e, "Authentication problem"));
       }
-      cvsMessagesTranslator.operationCompleted();
+      finally {
+        // Keep completed batches visible even when a later request fails or is canceled.
+        if (command instanceof UpdateCommand) {
+          cvsMessagesTranslator.operationCompleted();
+        }
+      }
+      if (!(command instanceof UpdateCommand)) {
+        cvsMessagesTranslator.operationCompleted();
+      }
     }
     catch (CommandException t) {
       throw root.processException(t);
@@ -268,6 +278,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
       cvsMessagesListener.commandFinished(composeCommandString(root, command),
                                           System.currentTimeMillis() - start);
       executeFinishActions();
+      CvsContentHashes.getInstance().flush();
     }
   }
 
