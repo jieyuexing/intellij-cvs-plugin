@@ -111,6 +111,13 @@ intellijPlatform {
         name = "OpenCVS"
         version = providers.gradleProperty("pluginVersion")
         changeNotes = """
+            <p><b>262.0.7</b></p>
+            <ul>
+              <li>Stop re-uploading files whose timestamps drifted but whose content is unchanged (for example after copying a working copy): content hashes are cached locally, and the server's confirmation repairs the recorded timestamps.</li>
+              <li>Plain updates that would upload more than 20 MB now run in batches with per-batch progress; finished batches persist even if the update is canceled. Merge, clean-copy, sticky, revision/date and keyword updates still run as a single request.</li>
+              <li>时间戳漂移但内容未变的文件（例如复制过工作副本后）不再每次更新都整份上传：本地缓存内容哈希，并借服务器确认修复记录的时间戳。</li>
+              <li>普通更新的上传量超过 20 MB 时分批执行并显示每批进度，取消后已完成的批次仍然保留；带合并、干净副本、粘性标记、版本/日期或关键字替换选项的更新仍一次执行。</li>
+            </ul>
             <p><b>262.0.6</b></p>
             <ul>
               <li>Fix update, history and other operations hanging forever once the server stayed silent longer than the read timeout; they now fail with the timeout error and remain cancellable.</li>
