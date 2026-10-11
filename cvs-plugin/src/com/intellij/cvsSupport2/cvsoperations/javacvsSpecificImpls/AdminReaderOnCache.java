@@ -120,13 +120,26 @@ public class AdminReaderOnCache implements IAdminReader {
   @Override
   public boolean isModified(FileObject fileObject, Date entryLastModified, ICvsFileSystem cvsFileSystem) {
     File file = cvsFileSystem.getLocalFileSystem().getFile(fileObject);
-    VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(file);
-    if (virtualFile == null) {
-      return !CvsStatusProvider.timeStampsAreEqual(entryLastModified.getTime(), file.lastModified());
+    long diskTimestamp = file.lastModified();
+    if (CvsStatusProvider.timeStampsAreEqual(entryLastModified.getTime(), diskTimestamp)) {
+      Entry entry = myCvsEntriesManager.getEntryFor(CvsVfsUtil.findFileByIoFile(file.getParentFile()), file.getName());
+      CvsContentHashes.getInstance().seed(file, entry);
+      return false;
     }
-    else {
-      return !CvsStatusProvider.timeStampsAreEqual(entryLastModified.getTime(), CvsVfsUtil.getTimeStamp(virtualFile));
+    Entry entry = myCvsEntriesManager.getEntryFor(CvsVfsUtil.findFileByIoFile(file.getParentFile()), file.getName());
+    if (entry == null || !CvsContentHashes.getInstance().matches(file, entry)) return true;
+
+    // Updating CVS/Entries here races the response writer and its in-memory cache. Restore the working-file
+    // timestamp instead; this is the same equality predicate javacvs will use for the next request.
+    try {
+      if (!file.setLastModified(entryLastModified.getTime())) {
+        LOG.debug("Cannot restore CVS timestamp for " + file);
+      }
     }
+    catch (SecurityException ignored) {
+      // Cache/metadata optimizations must not turn an otherwise valid CVS request into a failure.
+    }
+    return false;
   }
 
     @Override
