@@ -76,11 +76,16 @@ public final class ContentHashCache {
     return value != null && value.revision.equals(revision) && value.timestamp.equals(timestamp);
   }
 
-  /** Seeds an absent key only after an ordinary timestamp comparison succeeds. */
+  /**
+   * Seeds an absent key only after an ordinary timestamp comparison succeeds. A full cache is not churned by
+   * seeding: on trees larger than the capacity every update would otherwise evict and rehash the whole tree.
+   */
   public synchronized void seed(File file, Entry entry) {
-    if (isEligible(entry) && !sameEntry(myValues.get(key(file)), entry.getRevision(), timestamp(entry))) {
-      record(file, entry);
-    }
+    if (!isEligible(entry)) return;
+    Value existing = myValues.get(key(file));
+    if (sameEntry(existing, entry.getRevision(), timestamp(entry))) return;
+    if (existing == null && myValues.size() >= myCapacity) return;
+    record(file, entry);
   }
 
   /** Called after a normal Entries write; merge, add, remove, and conflict entries invalidate old data. */
