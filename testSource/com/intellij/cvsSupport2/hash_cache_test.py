@@ -60,7 +60,9 @@ public class ContentHashCacheTest {
   Path one=root.resolve("one.txt"), two=root.resolve("two.txt"), three=root.resolve("three.txt"); Files.writeString(one,"1"); Files.writeString(two,"2"); Files.writeString(three,"3");
   Entry oneEntry=entry("/one.txt/1.2/Mon Jan 01 00:00:00 2024//"), twoEntry=entry("/two.txt/1.2/Mon Jan 01 00:00:00 2024//"), threeEntry=entry("/three.txt/1.2/Mon Jan 01 00:00:00 2024//");
   tiny.seed(one.toFile(),oneEntry); tiny.seed(two.toFile(),twoEntry); tiny.seed(three.toFile(),threeEntry);
-  check(!tiny.matches(one.toFile(),oneEntry) && tiny.matches(two.toFile(),twoEntry) && tiny.matches(three.toFile(),threeEntry),"容量满时须淘汰最早条目");
+  check(tiny.matches(one.toFile(),oneEntry) && tiny.matches(two.toFile(),twoEntry) && !tiny.matches(three.toFile(),threeEntry),"容量满时播种不得淘汰已有条目，否则大树每次更新都会整树重算");
+  tiny.record(three.toFile(),threeEntry);
+  check(!tiny.matches(one.toFile(),oneEntry) && tiny.matches(two.toFile(),twoEntry) && tiny.matches(three.toFile(),threeEntry),"正常写入 Entries 时须按最久未用淘汰");
 
   boolean canceled=false; try { new ContentHashCache(root.resolve("cancel.bin"),()->{throw new RuntimeException("cancel");}).seed(file.toFile(),revisionTwo); } catch (RuntimeException expected) { canceled=true; }
   check(canceled,"取消必须传播，不能把半哈希当成命中");
