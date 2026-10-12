@@ -111,6 +111,13 @@ intellijPlatform {
         name = "OpenCVS"
         version = providers.gradleProperty("pluginVersion")
         changeNotes = """
+            <p><b>262.0.8</b></p>
+            <ul>
+              <li>Recognize tracked CVS subdirectories as part of their parent working copy while retaining independent nested checkouts.</li>
+              <li>Automatically remove redundant CVS directory mappings only when their parent remains owned by CVS; preserve child-only, other VCS and none mappings, with before/after history for rollback.</li>
+              <li>CVS 受管子目录归属父工作副本，不再误判为独立根；独立嵌套 checkout 仍可发现。</li>
+              <li>仅在父目录仍归 CVS 管理时自动收敛多余的 CVS 目录映射；保留仅映射子目录、其他 VCS 和 none 的边界，并记录变更前后映射以便回退。</li>
+            </ul>
             <p><b>262.0.7</b></p>
             <ul>
               <li>Stop re-uploading files whose timestamps drifted but whose content is unchanged (for example after copying a working copy): content hashes are cached locally, and the server's confirmation repairs the recorded timestamps.</li>
