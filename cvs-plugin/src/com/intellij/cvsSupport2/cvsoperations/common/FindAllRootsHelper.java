@@ -181,7 +181,7 @@ public class FindAllRootsHelper {
            Files.isRegularFile(admin.resolve("Repository"), LinkOption.NOFOLLOW_LINKS);
   }
 
-  private static boolean isTrackedChild(Path directory) throws IOException {
+  static boolean isTrackedChild(Path directory) throws IOException {
     Path parent = directory.getParent();
     if (parent == null || !isCvsWorkingCopyRoot(parent)) return false;
     // Entries.Log 里的增删由后条覆盖，避免 update 尚未合并日志时误判。

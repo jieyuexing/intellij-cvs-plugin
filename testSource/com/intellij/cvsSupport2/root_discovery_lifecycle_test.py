@@ -42,12 +42,15 @@ STUBS={
  public boolean missing;public VirtualFile findFileByPath(String p){return new VirtualFile(p);}public VirtualFile refreshAndFindFileByPath(String p){return missing?null:new VirtualFile(p);}}''',
 'com.intellij.util.messages.MessageBusConnection': '''public class MessageBusConnection {public com.intellij.openapi.vcs.VcsMappingListener listener;
  public MessageBusConnection connect(Object p){return this;}public void subscribe(Object topic,com.intellij.openapi.vcs.VcsMappingListener l){listener=l;}public void disconnect(){listener=null;}public void event(){if(listener!=null)listener.directoryMappingChanged();}}''',
-'com.intellij.cvsSupport2.cvsoperations.common.CvsRootMappingHistory': 'public class CvsRootMappingHistory {public int records; public void record(Object a,Object b){records++;}}',
+'com.intellij.cvsSupport2.cvsoperations.common.CvsRootMappingHistory': 'public class CvsRootMappingHistory {public int records; public Object before,after; public void record(Object a,Object b){records++;before=a;after=b;}}',
 'com.intellij.cvsSupport2.cvsoperations.common.FindAllRootsHelper': '''import java.nio.file.*;import java.util.*;
 public class FindAllRootsHelper {public interface ScanProgress {void checkCanceled();void onDirectory(Path p,int n,int r);}
+ public static Set<Path> tracked=new HashSet<>(); public static Collection<Path> containers;
+ public static boolean isCvsWorkingCopyRoot(Path p){return true;}
+ public static boolean isTrackedChild(Path p)throws java.io.IOException{return tracked.contains(p);}
  public static List<Path> roots=List.of(Path.of("/project/a"),Path.of("/project/a/nested"),Path.of("/project/b"));public static int errors;
  public static class ScanResult {public List<Path> getRoots(){return roots;}public int getErrors(){return errors;}public int getScannedDirectories(){return 10;}}
- public static ScanResult findVersionedPathsUnder(Collection<Path> p,ScanProgress progress,java.util.function.Predicate<Path> accept){progress.checkCanceled();return new ScanResult();}
+ public static ScanResult findVersionedPathsUnder(Collection<Path> p,ScanProgress progress,java.util.function.Predicate<Path> accept){progress.checkCanceled();containers=List.copyOf(p);return new ScanResult();}
  public static boolean isAtOrUnderAnyRoot(Path p,Collection<Path> roots){return roots.stream().anyMatch(p::startsWith);}
 }''',
 }
@@ -80,6 +83,16 @@ public class LifecycleTest {
   // 停用后旧任务不得发布；再次启用必须重新扫描，不能复用陈旧缓存。
   discovery.deactivate();app.flush();discovery.activate();task=take();task.run(new ProgressIndicator());discovery.deactivate();app.flush();task.onSuccess();app.flush();check(manager.writes==1,"停用后发布");
   discovery.activate();task=take();success(task);check(manager.writes==2,"重新启用未扫描");
+  var polluted=List.of(map("/project/a"),map("/project/a/src"),map("/project/a/src/deep"));
+  FindAllRootsHelper.tracked=Set.of(Path.of("/project/a/src"),Path.of("/project/a/src/deep"));
+  FindAllRootsHelper.roots=List.of(Path.of("/project/a"));
+  manager.mappings=polluted;project.bus.event();task=take();task.run(new ProgressIndicator());
+  check(manager.mappings.equals(polluted),"收敛在后台提前发布");
+  check(FindAllRootsHelper.containers.equals(List.of(Path.of("/project/a"))),"已收敛路径仍为 container");
+  task.onSuccess();app.flush();
+  check(manager.mappings.equals(List.of(map("/project/a"))),"收敛发布缺失");
+  check(project.history.before.equals(polluted)&&project.history.after.equals(manager.mappings),"收敛前后未留历史");
+  project.bus.event();app.flush();check(pm.tasks.isEmpty(),"收敛重复扫描");
   System.out.println("完整快照/EDT 发布/232 根标脏/幂等/并发改映射/取消抑制/IO 错误/根消失/停用/重新启用：通过");
  }
 }'''

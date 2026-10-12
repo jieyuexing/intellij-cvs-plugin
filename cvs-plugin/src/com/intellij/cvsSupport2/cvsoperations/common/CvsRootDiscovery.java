@@ -97,11 +97,14 @@ public final class CvsRootDiscovery {
     ProgressManager.getInstance().run(new Task.Backgroundable(
       myProject, CvsBundle.message("progress.title.discovering.cvs.roots"), true) {
       private FindAllRootsHelper.ScanResult myResult;
+      private List<VcsDirectoryMapping> myExpanded;
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
-        myResult = FindAllRootsHelper.findVersionedPathsUnder(containers, new FindAllRootsHelper.ScanProgress() {
+        List<VcsDirectoryMapping> retained = CvsRootMappings.collapse(mappings);
+        List<Path> scanContainers = CvsRootMappings.retainContainers(mappings, retained, containers);
+        myResult = FindAllRootsHelper.findVersionedPathsUnder(scanContainers, new FindAllRootsHelper.ScanProgress() {
           @Override
           public void checkCanceled() { indicator.checkCanceled(); }
           @Override
@@ -110,11 +113,12 @@ public final class CvsRootDiscovery {
             indicator.setText2(directory.toString());
           }
         }, path -> {
-          VcsDirectoryMapping owner = CvsRootMappings.owner(mappings, path);
+          VcsDirectoryMapping owner = CvsRootMappings.owner(retained, path);
           return owner != null && "CVS".equals(owner.getVcs());
         });
         // 不把读不到的子树当作空目录并发布不完整映射。
         if (myResult.getErrors() != 0) throw new IllegalStateException("Incomplete CVS root scan: " + myResult.getErrors());
+        myExpanded = CvsRootMappings.expand(retained, scanContainers, myResult.getRoots());
         refreshDiscoveredRoots(myResult.getRoots(), indicator);
         indicator.checkCanceled();
       }
@@ -123,7 +127,7 @@ public final class CvsRootDiscovery {
       public void onSuccess() {
         try {
           if (!isCurrent(generation) || !mappings.equals(manager.getDirectoryMappings())) return;
-          List<VcsDirectoryMapping> expanded = CvsRootMappings.expand(mappings, containers, myResult.getRoots());
+          List<VcsDirectoryMapping> expanded = myExpanded;
           List<Path> published = new ArrayList<>();
           for (Path root : myResult.getRoots()) {
             VcsDirectoryMapping owner = CvsRootMappings.owner(expanded, root);

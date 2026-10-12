@@ -41,6 +41,7 @@ public class RootsTest {
  static Path wc(Path p,String entries)throws Exception{Files.createDirectories(p.resolve("CVS")); Files.writeString(p.resolve("CVS/Entries"),entries); Files.writeString(p.resolve("CVS/Root"),"local");Files.writeString(p.resolve("CVS/Repository"),"module");return p;}
  static VcsDirectoryMapping m(Path p,String vcs){return new VcsDirectoryMapping(p.toString(),vcs);}
  public static void main(String[] args)throws Exception{
+  CvsRootConvergenceTest.run(p -> new CvsRootChecker().isRoot(new com.intellij.openapi.vfs.VirtualFile(p.toString())));
   Path c=Files.createTempDirectory("roots-").toAbsolutePath();
   Path a=wc(c.resolve("a"),"D/src////\n"), src=wc(a.resolve("src"),""), b=wc(c.resolve("b"),"");
   Files.writeString(src.resolve("CVS/Repository"),"module/src");
@@ -82,7 +83,7 @@ public class RootsTest {
  }
 }''')
     java=Path(os.environ['JAVA_HOME'])/'bin'
-    sources=list(base.rglob('*.java'))+[SRC/'cvsoperations/common/FindAllRootsHelper.java',SRC/'cvsoperations/common/CvsRootMappings.java',SRC/'cvsoperations/common/CvsRootChecker.java',ROOT/'testSource/com/intellij/cvsSupport2/cvsoperations/common/FindAllRootsHelperTest.java']
+    sources=list(base.rglob('*.java'))+[SRC/'cvsoperations/common/FindAllRootsHelper.java',SRC/'cvsoperations/common/CvsRootMappings.java',SRC/'cvsoperations/common/CvsRootChecker.java',ROOT/'testSource/com/intellij/cvsSupport2/cvsoperations/common/FindAllRootsHelperTest.java',ROOT/'testSource/com/intellij/cvsSupport2/cvsoperations/common/CvsRootConvergenceTest.java']
     subprocess.run([str(java/'javac'),'--release','17','-encoding','UTF-8','-d',tmp,*map(str,sources)],check=True)
     subprocess.run([str(java/'java'),'-Djava.io.tmpdir='+tmp,'-cp',tmp,'RootsTest'],check=True)
 
