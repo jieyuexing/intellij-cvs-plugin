@@ -6,7 +6,7 @@
 
 > **与 OpenBSD 的 OpenCVS 项目及 JetBrains 均无隶属关系。**
 
-[JetBrains Marketplace](https://plugins.jetbrains.com/plugin/34911-opencvs)（上架审核中）·
+[JetBrains Marketplace](https://plugins.jetbrains.com/plugin/34911-opencvs) ·
 [Releases](https://github.com/jieyuexing/intellij-cvs-plugin/releases) ·
 [版本记录](#版本记录) ·
 许可证：[Apache 2.0](LICENSE)
@@ -31,7 +31,7 @@
 
 ### JetBrains Marketplace
 
-审核通过后：**Settings → Plugins → Marketplace**，搜索 **OpenCVS**。
+**Settings → Plugins → Marketplace**，搜索 **OpenCVS**。
 
 ### GitHub 插件仓库（推荐，最快拿到修复）
 
@@ -127,7 +127,7 @@ JetBrains 在 2019.2 把 CVS 移出 IntelliJ IDEA 主仓库，2020-11 [宣布弃
 - [x] 在 IDEA 2023.2.8 与 2026.2 上完成安装与根目录发现冒烟验证
 - [x] 中文界面资源随 IDE 语言切换
 - [x] GitHub 更新渠道与签名发行
-- [ ] JetBrains Marketplace 审核通过——首次审核要求移除 Plugin Verifier 在 2026.2 上报告的内部 API 使用
+- [x] 已在 JetBrains Marketplace 上架（`262.0.6` 起审核通过，见 [docs/release.md](docs/release.md)）
 - [ ] 2023.2.8 与 2026.2 上的大目录回滚冒烟（分批恢复、可见的取消、部分取消后的恢复、不残留 `.#file.revision`）
 - [ ] Rust 第 0 阶段：Java 基线 profiling 与是否推进的决定（[路线图](docs/rust-performance-roadmap.md)；仅规划）
 

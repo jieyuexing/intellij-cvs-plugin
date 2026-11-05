@@ -78,7 +78,7 @@ smartcvs-src/messages/SmartCvsSrcBundle_zh.properties
 ```
 
 校验：`python3 scripts/check_i18n_keys.py`  
-任务机制：`docs/task-mechanism.md`（harness Task Store + 本仓 Status）
+任务机制：`docs/task-mechanism.md`（总仓 `host/bin/universe task` + 本仓 Status）
 
 `plugin.xml` 的 `<description>`、Marketplace 长文案可中英分场景维护，但 **IDE 内 label 以 Bundle 为准**。
 

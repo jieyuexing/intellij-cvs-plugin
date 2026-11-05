@@ -6,7 +6,7 @@ CVS version control for current IntelliJ IDEA releases — a community-maintaine
 
 > **Not affiliated with the OpenBSD OpenCVS project or JetBrains.**
 
-[JetBrains Marketplace](https://plugins.jetbrains.com/plugin/34911-opencvs) (listing under review) ·
+[JetBrains Marketplace](https://plugins.jetbrains.com/plugin/34911-opencvs) ·
 [Releases](https://github.com/jieyuexing/intellij-cvs-plugin/releases) ·
 [Changelog](#changelog) ·
 License: [Apache 2.0](LICENSE)
@@ -31,7 +31,7 @@ The plugin id is `io.github.jieyuexing.cvs`, different from the official `CVS` p
 
 ### JetBrains Marketplace
 
-After the listing is approved: **Settings → Plugins → Marketplace**, search for **OpenCVS**.
+**Settings → Plugins → Marketplace**, search for **OpenCVS**.
 
 ### GitHub plugin repository (recommended for the latest fixes)
 
@@ -127,7 +127,7 @@ JetBrains moved CVS out of the main IntelliJ IDEA tree in 2019.2, [deprecated it
 - [x] Install and root-discovery smoke on IDEA 2023.2.8 and 2026.2
 - [x] Chinese UI bundles switched by IDE language
 - [x] GitHub update channel and signed releases
-- [ ] JetBrains Marketplace approval — first review asked to remove Internal API usages reported by the Plugin Verifier on 2026.2
+- [x] Listed on JetBrains Marketplace (approved since `262.0.6`, see [docs/release.md](docs/release.md))
 - [ ] Large-directory rollback smoke on 2023.2.8 and 2026.2 (batched restore, visible Cancel, partial-cancel recovery, no `.#file.revision` leftovers)
 - [ ] Rust Phase 0: Java baseline profiling and go/no-go decision ([roadmap](docs/rust-performance-roadmap.md); planning only)
 
