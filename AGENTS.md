@@ -78,7 +78,7 @@ smartcvs-src/messages/SmartCvsSrcBundle_zh.properties
 ```
 
 校验：`python3 scripts/check_i18n_keys.py`  
-任务机制：`docs/task-mechanism.md`（总仓 `host/bin/universe task` + 本仓 Status）
+任务机制：`docs/task-mechanism.md`（本仓 `README.md` Status / `README_ZH.md`「状态」）
 
 `plugin.xml` 的 `<description>`、Marketplace 长文案可中英分场景维护，但 **IDE 内 label 以 Bundle 为准**。
 
@@ -119,7 +119,7 @@ smartcvs-src/messages/SmartCvsSrcBundle_zh.properties
 3. **双语同步**：改 en value 或新增 key 时，**同提交**更新 zh（或标明 `i18n-gap` 与原因）。
 4. **验证**：能构建则 `buildPlugin` / 安装到目标 IDE；至少冒烟文案切换（英文 UI / 中文 UI）。
 5. **提交**：本仓独立 Git 根；说明写清动机与是否触及 i18n。未经用户明确要求 **不 force-push、不改远程保护分支历史**。
-6. **push / 发版 / Marketplace 上传**：须用户明确授权。
+6. **push / 发版 / Marketplace 上传**：提交与推送按总仓根 `AGENTS.md`（主会话核验后直接提交推送，执行者只提交不推送）；发版与 Marketplace 上传须用户明确授权。
 
 ## 5. 硬停止
 
@@ -145,6 +145,6 @@ smartcvs-src/messages/SmartCvsSrcBundle_zh.properties
 
 ## 8. 发版路由
 
-- 发版 / 在线更新 → `python3 scripts/release.py prepare|publish --receipt <仓外任务目录/prepare.json>` → [docs/release.md](docs/release.md)。版本提交与更新 XML 提交分开；先确认 Release ZIP 可下载，再公开新 XML。push / 发版仍须用户明确授权。
+- 发版 / 在线更新 → `python3 scripts/release.py prepare|publish --receipt <仓外任务目录/prepare.json>` → [docs/release.md](docs/release.md)。版本提交与更新 XML 提交分开；先确认 Release ZIP 可下载，再公开新 XML。提交与推送按总仓根 `AGENTS.md`；发版仍须用户明确授权。
 
 - 签名初始化 / 轮换 → `python3 -B scripts/setup_signing.py`（初始化须授权，已有材料拒绝覆盖）；Marketplace 后续发布 → `python3 -B scripts/release.py marketplace --first-upload-completed --receipt <仓外回执>` → [docs/release.md](docs/release.md)「262.0.2：签名与 Marketplace」。首次网页上传由用户执行；上传另行授权。

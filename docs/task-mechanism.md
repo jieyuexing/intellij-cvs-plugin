@@ -1,11 +1,11 @@
 # Task 机制（intellij-cvs-plugin）
 
-本仓是总仓 `host/config/workspaces.json` 中登记 id `intellij-cvs-plugin` 的项目根。工程任务分两层，互不冒充终态：
+本仓是总仓 `host/config/workspaces.json` 中登记 id `intellij-cvs-plugin` 的项目根。
 
-## 1. 总仓 Task（机器状态）
+## 1. 总仓关系与非发布门
 
-- 入口：在总仓根运行 `host/bin/universe task <list|show|create|update|continue|finish|cancel>`；按登记 id 定位本仓，不在本仓写死总仓或机器路径。
-- Task 状态不作为本插件的发布门；GTD 勾选、Jira 状态都不签发 done。
+- 总仓 `host/bin/universe task`（`host/packages/tasks`）已于 2026-11-11 退役，不再使用；工作状态以本仓里程碑与文档为准。
+- GTD 勾选、Jira 状态均不作为本插件的发布门，不签发 done。
 
 ## 2. 本仓里程碑
 
