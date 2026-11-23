@@ -12,8 +12,8 @@ import tempfile
 PROJECT = Path(__file__).resolve().parents[4]
 ROOT = Path(os.environ.get('CVS_TEST_ROOT', PROJECT))
 JAVA_HOME = Path(os.environ['JAVA_HOME'])
-IDE = JAVA_HOME.parents[2]
-CP = os.pathsep.join([str(PROJECT/'build/classes/java/main'), str(IDE/'lib/*')])
+IDE_LIB = Path(os.environ.get('CVS_IDEA_LIB', JAVA_HOME.parents[2]/'lib'))
+CP = os.pathsep.join([str(PROJECT/'build/classes/java/main'), str(IDE_LIB/'*')])
 STUBS = {
  'com/intellij/CvsBundle.java': 'package com.intellij; public class CvsBundle { public static String message(String s,Object... a){return s;} }',
  'com/intellij/openapi/diagnostic/Logger.java': 'package com.intellij.openapi.diagnostic; public class Logger { public static Logger getInstance(Class<?> c){return new Logger();} public void debug(String s){} public void error(Object x){throw new AssertionError(x);} }',
