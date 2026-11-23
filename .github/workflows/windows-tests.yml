@@ -30,9 +30,13 @@ jobs:
       - name: Offline tests
         run: |
           export TMP="$RUNNER_TEMP" TEMP="$RUNNER_TEMP"
-          info=$(find "$(cygpath -u "$GRADLE_USER_HOME")" -name product-info.json -path '*IU*' 2>/dev/null | head -1 || true)
-          if [ -z "$info" ]; then echo "IntelliJ platform not found"; exit 1; fi
-          ide=$(cd "$(dirname "$info")" && pwd -W)
+          jar=$(find "$(cygpath -u "$GRADLE_USER_HOME")" -path '*/lib/util-8.jar' 2>/dev/null | head -1 || true)
+          if [ -z "$jar" ]; then
+            echo "IntelliJ platform not found under $GRADLE_USER_HOME"
+            find "$(cygpath -u "$GRADLE_USER_HOME")" \( -name product-info.json -o -name 'util-8*.jar' \) 2>/dev/null | head -20 || true
+            exit 1
+          fi
+          ide=$(cd "$(dirname "$jar")/.." && pwd -W)
           echo "IDE: $ide"
           export CVS_IDEA_LIB="$ide/lib"
           dir=testSource/com/intellij/cvsSupport2
