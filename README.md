@@ -92,6 +92,7 @@ If VoiceOver and IDE accessibility are not needed, add `-Dsun.awt.mac.a11y.enabl
 
 | Version | Date | Changes |
 | --- | --- | --- |
+| `262.0.9` | 2026-11-24 | Fix updates aborting midway on IDEA 2026.2 when the server removes or overwrites a locally read-only file: the read-only attribute is set on the file itself again instead of through the VFS outside a write action ([#1](https://github.com/jieyuexing/intellij-cvs-plugin/issues/1)). |
 | `262.0.8` | 2026-10-12 | Stop detecting tracked CVS subdirectories as independent roots; automatically collapse redundant CVS mappings when their parent is still owned by CVS, with rollback history. Preserve child-only mappings, other VCS/none boundaries and independent nested checkouts. |
 | `262.0.7` | 2026-10-11 | Files whose timestamps drifted but whose content is unchanged (for example after copying the working copy) are no longer re-uploaded on every update: content hashes are cached, and the server's confirmation repairs the timestamps. Plain updates that would upload more than 20 MB now run in batches; finished batches persist even when canceled. |
 | `262.0.6` | 2026-10-10 | Fix operations hanging forever after the server stayed silent past the read timeout (now fail with the timeout error, and stay cancellable); default timeout raised from 10 to 300 seconds. |

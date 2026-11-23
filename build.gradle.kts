@@ -111,6 +111,11 @@ intellijPlatform {
         name = "OpenCVS"
         version = providers.gradleProperty("pluginVersion")
         changeNotes = """
+            <p><b>262.0.9</b></p>
+            <ul>
+              <li>Fix updates aborting midway when the server removes or overwrites a locally read-only file on IntelliJ IDEA 2026.2: the read-only attribute is changed on the file itself again instead of through the VFS outside a write action.</li>
+              <li>修复 IntelliJ IDEA 2026.2 上服务器删除或覆盖本地只读文件时更新中途中断：只读属性改回直接设置在文件上，不再在写动作之外经 VFS 修改。</li>
+            </ul>
             <p><b>262.0.8</b></p>
             <ul>
               <li>Recognize tracked CVS subdirectories as part of their parent working copy while retaining independent nested checkouts.</li>
