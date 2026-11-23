@@ -12,6 +12,7 @@ jobs:
     timeout-minutes: 60
     env:
       PYTHONUTF8: "1"
+      JAVA_TOOL_OPTIONS: -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8
     defaults:
       run:
         shell: bash
@@ -28,8 +29,10 @@ jobs:
 
       - name: Offline tests
         run: |
-          ide=$(dirname "$(find ~/.gradle -path '*/lib/util-8.jar' -print -quit)")/..
-          ide=$(cd "$ide" && pwd -W)
+          export TMP="$RUNNER_TEMP" TEMP="$RUNNER_TEMP"
+          info=$(find "${GRADLE_USER_HOME:-$HOME/.gradle}" "$USERPROFILE/.gradle" .intellijPlatform -name product-info.json -path '*IU*' 2>/dev/null | head -1)
+          if [ -z "$info" ]; then echo "IntelliJ platform not found"; exit 1; fi
+          ide=$(cd "$(dirname "$info")" && pwd -W)
           echo "IDE: $ide"
           export CVS_IDEA_LIB="$ide/lib"
           dir=testSource/com/intellij/cvsSupport2
