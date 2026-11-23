@@ -15,9 +15,7 @@
  */
 package com.intellij.cvsSupport2.javacvsImpl;
 
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.io.ReadOnlyAttributeUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import org.netbeans.lib.cvsclient.file.IFileReadOnlyHandler;
 
 import java.io.File;
@@ -30,14 +28,7 @@ public class FileReadOnlyHandler implements IFileReadOnlyHandler{
   @Override
   public void setFileReadOnly(File file, boolean readOnly) throws IOException {
     if (file.canWrite() != readOnly) return;
-    VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(file);
-    if (vf != null) {
-      ReadOnlyAttributeUtil.setReadOnlyAttribute(vf, readOnly);
-    }
-    else {
-      // file not in VFS yet — fall back to java.io
-      //noinspection ResultOfMethodCallIgnored
-      file.setWritable(!readOnly);
-    }
+    // 在 CVS 响应线程上调用，不持有写动作；只改物理文件属性，不经 VFS 写（否则 2026.2 断言并中断整条响应流）
+    NioFiles.setReadOnly(file.toPath(), readOnly);
   }
 }
