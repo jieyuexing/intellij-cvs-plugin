@@ -30,7 +30,7 @@ jobs:
       - name: Offline tests
         run: |
           export TMP="$RUNNER_TEMP" TEMP="$RUNNER_TEMP"
-          info=$(find "${GRADLE_USER_HOME:-$HOME/.gradle}" "$USERPROFILE/.gradle" .intellijPlatform -name product-info.json -path '*IU*' 2>/dev/null | head -1)
+          info=$(find "$(cygpath -u "$GRADLE_USER_HOME")" -name product-info.json -path '*IU*' 2>/dev/null | head -1 || true)
           if [ -z "$info" ]; then echo "IntelliJ platform not found"; exit 1; fi
           ide=$(cd "$(dirname "$info")" && pwd -W)
           echo "IDE: $ide"
